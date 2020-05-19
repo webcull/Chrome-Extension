@@ -1,0 +1,25 @@
+#html-loading-page body,
+#html-loading-page {
+	height:60px;
+	/*transition: 1s;
+	transition-timing-function: cubic-bezier(0.075, 0.82, 0.165, 1);*/
+}
+#loading-page {
+	background-color: #3b99fc;
+	color:#fff;
+	height:100%;
+	padding:10px;
+}
+#loading-page .loader {
+	display:inline-block;
+	margin-right:25px;
+	margin-left:32px;
+	margin-top:3px;
+	vertical-align: top;
+	position: absolute;
+}
+#loading-page .loading-text {
+	padding:9px 0 0 90px;
+	display: inline-block;
+	vertical-align: top;
+}
