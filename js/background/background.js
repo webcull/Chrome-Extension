@@ -12,33 +12,33 @@ app.loaded = function () {
 		delete app.loadedPromises[intItr];
 	}
 };
-// prevent connections like saves
-app.backgroundPost = function (arrParams) {
-	sessionPost(arrParams);
-};
 
+app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
 
 function initalizeAccount() {
-	sessionPost({
-		url : "https://webcull.com/api/load",
-		post : {
-			
+	sessionPostWithRetries(
+		{
+			url: "https://webcull.com/api/load",
+			post: {
+
+			},
+			success: function (arrData) {
+				if (arrData.no_user)
+					return;
+				app.data = arrData;
+				processURLs();
+			}
 		},
-		success : function (arrData) {
-			if (arrData.no_user)
-				return;
-			app.data = arrData;
-			processURLs();
-		}
-	});
+		1
+	);
 }
 
 app.processURLs = processURLs;
 function processURLs() {
 	for (var intParent in app.data.stacks) {
 		var intLen = app.data.stacks[intParent].length;
-		for (var intItr=0; intItr<intLen; ++intItr) {
+		for (var intItr = 0; intItr < intLen; ++intItr) {
 			var objStack = app.data.stacks[intParent][intItr];
 			if (objStack.is_url == 1) {
 				app.urls[objStack.value] = 1;
@@ -54,7 +54,7 @@ function alterIcon(strUrl) {
 	var boolExists = strUrl != "" && app.urls[strUrl];
 	if (boolExists) {
 		chrome.browserAction.setIcon({
-			path : {
+			path: {
 				"16": "images/webcull-16x.png",
 				"32": "images/webcull-32x.png",
 				"48": "images/webcull-48x.png",
@@ -64,7 +64,7 @@ function alterIcon(strUrl) {
 	} else {
 		console.log("Doesn't exists");
 		chrome.browserAction.setIcon({
-			path : {
+			path: {
 				"128": "images/logo-gray-128.png"
 			}
 		});
@@ -75,14 +75,15 @@ function alterIcon(strUrl) {
 // make sure it saves on disconnect
 chrome.runtime.onConnect.addListener(function (externalPort) {
 	externalPort.onDisconnect.addListener(function () {
-  		app.saveCrumbs();
+		// TODO FIXME  failing
+		app.saveCrumbs();
 	});
 });
 
 // for general navigation
-chrome.webNavigation.onBeforeNavigate.addListener(function(tab) {
+chrome.webNavigation.onBeforeNavigate.addListener(function (tab) {
 	if (tab.frameId == 0) {
-		chrome.tabs.getSelected(null, function(selectedTab) {
+		chrome.tabs.getSelected(null, function (selectedTab) {
 			if (selectedTab.id == tab.tabId) {
 				alterIcon(tab.url);
 			}
@@ -93,18 +94,18 @@ chrome.webNavigation.onBeforeNavigate.addListener(function(tab) {
 // for tracking forwarding
 chrome.webRequest.onBeforeRequest.addListener(function (details) {
 	if (details.type == "main_frame") {
-		chrome.tabs.getSelected(null, function(selectedTab) {
+		chrome.tabs.getSelected(null, function (selectedTab) {
 			if (selectedTab.id == details.tabId) {
 				alterIcon(details.url);
 			}
 		});
 	}
-},{urls: ["<all_urls>"]});
+}, { urls: ["<all_urls>"] });
 
 // for when the tab is switched
-chrome.tabs.onActivated.addListener(function(info) {
-    chrome.tabs.get(info.tabId, function (tab) {
-    	//if (tab.url != "")
-    	alterIcon(tab.url);
-    });
+chrome.tabs.onActivated.addListener(function (info) {
+	chrome.tabs.get(info.tabId, function (tab) {
+		//if (tab.url != "")
+		alterIcon(tab.url);
+	});
 });
