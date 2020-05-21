@@ -3,16 +3,6 @@ chrome.runtime.connect();
 var background = chrome.extension.getBackgroundPage(),
 	app = background.app;
 
-// init
-app.getBookmark = function () {
-	var objBookmark = null;
-	if (app.data.bookmarks_found)
-		objBookmark = app.data.bookmarks_found[0];
-	if (!objBookmark)
-		objBookmark = app.data;
-	return objBookmark;
-};
-
 /* init process */
 pages['bookmark-page'] = function ($self) {
 	getTab(function (tab) {
@@ -95,7 +85,7 @@ pages['bookmark-page'] = function ($self) {
 										$("#bookmark-keywords-input").removeAttr('disabled')
 										$("#bookmark-notes-input").removeAttr('disabled')
 										$("#save-location-input").removeAttr('disabled')
-										$progressBar.removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
+										$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
 										paging('bookmark-page');
 									})
 								}
@@ -118,7 +108,6 @@ pages['bookmark-page'] = function ($self) {
 						app.loaded();
 						if (!objBookmark.parse_date || objBookmark.parse_date == "") {
 							$("#bookmark-icon").addClass("loading");
-							//return;
 							app.backgroundPost({
 								url: "https://webcull.com/api/process",
 								post: {
@@ -135,6 +124,7 @@ pages['bookmark-page'] = function ($self) {
 								}
 							});
 						}
+						$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
 					}
 				},
 				1
@@ -144,7 +134,6 @@ pages['bookmark-page'] = function ($self) {
 };
 /* modules and binders */
 $(function () {
-
 	$("#bookmark-switch-user").click(function () {
 		chrome.tabs.update({
 			url: "https://webcull.com/accounts/switch"
@@ -161,9 +150,7 @@ $(function () {
 	$(".initStackUpdate").each(function () {
 		$(this).stackUpdate();
 	});
-
 	/* bookmark location breadcrumbs binder */
-
 	(function () {
 		// init breadcrumbs
 		var $input = $("#save-location-input"),

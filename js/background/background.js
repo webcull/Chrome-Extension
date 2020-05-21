@@ -12,6 +12,14 @@ app.loaded = function () {
 		delete app.loadedPromises[intItr];
 	}
 };
+app.getBookmark = function () {
+	var objBookmark = null;
+	if (app.data.bookmarks_found)
+		objBookmark = app.data.bookmarks_found[0];
+	if (!objBookmark)
+		objBookmark = app.data;
+	return objBookmark;
+};
 
 app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
