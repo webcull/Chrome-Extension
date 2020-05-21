@@ -43,9 +43,11 @@ pages['bookmark-page'] = function ($self) {
 					},
 					success: function (arrData) {
 						if (arrData.no_user) {
-							// show accounts sign up
+							// FIX CHX-004 show accounts sign in 
+							// if not logged in
 							$progressBar.addClass('response-recieved');
 							$progressBar.addClass('assets-loaded');
+							progressBar.addClass('complete');
 							paging("accounts-page")
 							return
 						}
@@ -72,20 +74,32 @@ pages['bookmark-page'] = function ($self) {
 							$bookmarkStatus.html("Already saved in " + intBookmarksFound + " location" + (intBookmarksFound == 1 ? '' : 's') + " <a href='#' class='bookmark-status-link red' id='removeBookmark'>Remove</a>");
 						}
 						$bookmarkStatus.find("#removeBookmark").click(function () {
-							//if (arrData.bookmarks_found && arrData.bookmarks_found.length) {
 							delete app.urls[strURL];
 							app.alterIcon(strURL);
-							//}
 							app.backgroundPost({
 								url: "https://webcull.com/api/remove",
-								post: {
-									stack_id: objBookmark.stack_id
-								},
-								success: function () {
+								post: { stack_id: objBookmark.stack_id },
 
+								// Fix CHX-005
+								success: function () {
+									$bookmarkStatus.html("Bookmark removed <a href='#' class='bookmark-status-link red' id='addBookmark'>Re-add</a>");
+									$("#bookmark-title-input").attr('disabled', true)
+									$("#bookmark-url-input").attr('disabled', true)
+									$("#bookmark-keywords-input").attr('disabled', true)
+									$("#bookmark-notes-input").attr('disabled', true)
+									$("#save-location-input").attr('disabled', true)
+
+									$bookmarkStatus.find("#addBookmark").click(function () {
+										$("#bookmark-title-input").removeAttr('disabled')
+										$("#bookmark-url-input").removeAttr('disabled')
+										$("#bookmark-keywords-input").removeAttr('disabled')
+										$("#bookmark-notes-input").removeAttr('disabled')
+										$("#save-location-input").removeAttr('disabled')
+										$progressBar.removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
+										paging('bookmark-page');
+									})
 								}
 							});
-							window.close();
 						});
 						if (objBookmark.nickname)
 							$("#bookmark-title-input").val(objBookmark.nickname).trigger('update');
