@@ -1,0 +1,38 @@
+#network-page {
+    text-align: center;
+    background-color: #3b99fc;
+    height: fit-content;
+    color: white;
+    font-family: monospace;
+    font: inherit;
+
+}
+
+#network-page .logo-container {
+    text-align: center;
+    display: block;
+    padding: 30px;
+}
+
+#network-page .action-button {
+    padding: 30px;
+    color: white;
+
+}
+
+#network-page .action-button button {
+    height: 45px;
+    width: 145px;
+    border-radius: 8px;
+    background-color: white;
+    -webkit-transition: background 1s; 
+    transition: background 1s;
+    font-size: large;
+}
+
+#network-page .action-button button:hover {
+    background-color: lightgray;
+}
+#network-page #error-type{
+    font-weight: bold;
+}

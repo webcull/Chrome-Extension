@@ -5,39 +5,38 @@ var background = chrome.extension.getBackgroundPage(),
 
 /* init process */
 pages['bookmark-page'] = function ($self) {
-	getTab(function (tab) {
-		var strURL = tab.url.replace(/ /, '+');
-		if (0 == 1 && !strURL.match(/http(s)?:\/\//i)) {
-			paging("loading-page");
-			// not http or https so just take user to webcull
-			chrome.tabs.update({
-				url: "https://webcull.com"
-			});
-		} else {
-			$("html,body").removeClass('is-init');
-			/* Try to save the current URL as a bookmark */
-			// Get the current URL
-			$("body").removeClass('is-loaded');
-			var $progressBar = $("#progress-bar");
-			$.delay(1, function () {
-				$progressBar.addClass('loading-started');
-			});
-			app.urls[strURL] = 1;
-			app.alterIcon(strURL);
-			// get the current session id
-			app.backgroundPost(
-				{
+	async_getTab()
+		.then(function (tab) {
+			var strURL = tab.url.replace(/ /, '+');
+			if (0 == 1 && !strURL.match(/http(s)?:\/\//i)) {
+				paging("loading-page");
+				// not http or https so just take user to webcull
+				chrome.tabs.update({
+					url: "https://webcull.com"
+				});
+			} else {
+				$("html,body").removeClass('is-init');
+				/* Try to save the current URL as a bookmark */
+				// Get the current URL
+				$("body").removeClass('is-loaded');
+				var $progressBar = $("#progress-bar");
+				$.delay(1, function () {
+					$progressBar.addClass('loading-started');
+				});
+				app.urls[strURL] = 1;
+				app.alterIcon(strURL);
+				var post = {
 					url: "https://webcull.com/api/autosavelink",
 					post: {
 						url: strURL
-					},
-					success: function (arrData) {
+					}
+				}
+				app.backgroundPost(post, 1)
+					.then(function (arrData) {
 						if (arrData.no_user) {
 							// FIX CHX-004 show accounts sign in 
 							// if not logged in
-							$progressBar.addClass('response-recieved');
-							$progressBar.addClass('assets-loaded');
-							progressBar.addClass('complete');
+							$progressBar.addClass('response-recieved').addClass('assets-loaded').addClass('complete');
 							paging("accounts-page")
 							return
 						}
@@ -66,19 +65,15 @@ pages['bookmark-page'] = function ($self) {
 						$bookmarkStatus.find("#removeBookmark").click(function () {
 							delete app.urls[strURL];
 							app.alterIcon(strURL);
-							app.backgroundPost({
-								url: "https://webcull.com/api/remove",
-								post: { stack_id: objBookmark.stack_id },
-
-								// Fix CHX-005
-								success: function () {
+							app.backgroundPost({ url: "https://webcull.com/api/remove", post: { stack_id: objBookmark.stack_id } }, 1)
+								.then(function () {
+									// Fix CHX-005
 									$bookmarkStatus.html("Bookmark removed <a href='#' class='bookmark-status-link red' id='addBookmark'>Re-add</a>");
 									$("#bookmark-title-input").attr('disabled', true)
 									$("#bookmark-url-input").attr('disabled', true)
 									$("#bookmark-keywords-input").attr('disabled', true)
 									$("#bookmark-notes-input").attr('disabled', true)
 									$("#save-location-input").attr('disabled', true)
-
 									$bookmarkStatus.find("#addBookmark").click(function () {
 										$("#bookmark-title-input").removeAttr('disabled')
 										$("#bookmark-url-input").removeAttr('disabled')
@@ -88,8 +83,11 @@ pages['bookmark-page'] = function ($self) {
 										$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
 										paging('bookmark-page');
 									})
-								}
-							});
+								})
+								.catch(function (error) {
+									/* Fetch error */
+									console.log(error)
+								})
 						});
 						if (objBookmark.nickname)
 							$("#bookmark-title-input").val(objBookmark.nickname).trigger('update');
@@ -108,12 +106,8 @@ pages['bookmark-page'] = function ($self) {
 						app.loaded();
 						if (!objBookmark.parse_date || objBookmark.parse_date == "") {
 							$("#bookmark-icon").addClass("loading");
-							app.backgroundPost({
-								url: "https://webcull.com/api/process",
-								post: {
-									web_data_id: objBookmark.web_data_id
-								},
-								success: function (objResponse) {
+							app.backgroundPost({ url: "https://webcull.com/api/process", post: { web_data_id: objBookmark.web_data_id } }, 1)
+								.then(function (objResponse) {
 									$("#bookmark-icon").removeClass("loading");
 									if (objResponse.icon)
 										$("#bookmark-icon").css({
@@ -121,17 +115,47 @@ pages['bookmark-page'] = function ($self) {
 										});
 									if (objResponse.nickname)
 										$("#bookmark-title-input").val(objResponse.nickname).trigger('update');
-								}
-							});
+								})
+								.catch(err=>{console.log(err)})
 						}
-						$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
-					}
-				},
-				1
-			);
-		}
-	});
-};
+						$progressBar.removeClass('complete')
+							.removeClass('assets-loaded')
+							.removeClass('response-recieved')
+							.removeClass('loading-started')
+
+					}).catch(function (error) {
+						/* Fetch error */
+						// Task: CHX-007
+						// show retry page
+						$progressBar.removeClass('complete')
+							.removeClass('assets-loaded')
+							.removeClass('response-recieved')
+							.removeClass('loading-started')
+						if (error.constructor.name === 'WebCullError') {
+							if(error.code === 'NO_COOKIE')return paging("accounts-page")
+						}
+						else { 
+							var context ={
+								callback: function(){
+									paging('bookmark-page')
+								},
+								title:'Request Error',
+								msg: 'An Error ocurred while saving bookmark. Ensure you have an Active Internet connection',
+								action: 'Try Again'
+
+							}
+							return paging('network-page' , context)
+						 }
+
+
+					})
+			}
+		})
+		.catch(function (error) {
+			/* Failed t get tab */
+			console.log(error)
+		})
+}
 /* modules and binders */
 $(function () {
 	$("#bookmark-switch-user").click(function () {
@@ -241,11 +265,9 @@ $(function () {
 					url: "https://webcull.com/api/remove",
 					post: {
 						stack_id: arrDeleteItems
-					},
-					success: function () {
-
-					}
-				});
+				}},1)
+				.then(function(response){})
+				.catch(error=>{console.log(error)})
 		}
 		function didCrumbsChange() {
 			var
@@ -270,39 +292,41 @@ $(function () {
 					arrCrumbs: arrCrumbs,
 					arrCrumbsValues: arrCrumbsValues,
 					stack_id: objBookmark.stack_id
-				},
-				success: function (data) {
-					var intNewStacks = data.new_stack_ids.length;
-					if (intNewStacks) {
-						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
-							arrCrumbs.pop(); // take the nulls off the end
-						}
-						var
-							intCrumbs = arrCrumbs.length,
-							intParent = arrCrumbs[intCrumbs - 1] * 1;
-						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
-							var intStack = data.new_stack_ids[intItr] * 1;
-							arrCrumbs.push(intStack);
-							if (!app.data.stacks[intParent])
-								app.data.stacks[intParent] = [];
-							var objNewStack = {
-								stack_id: intStack,
-								parent_id: intParent,
-								is_url: 0,
-								nickname: arrCrumbsValues[intItr + intCrumbs],
-								value: "",
-								order_id: app.data.stacks[intParent].length + 1
-							};
-							arrTempStacks[intStack] = intParent;
-							app.data.stacks[intParent].push(objNewStack);
-							intParent = intStack;
-						}
-						arrLastCrumbs = arrCrumbs.slice(0);
-						arrLastCrumbsValues = arrCrumbsValues.slice(0);
+				}},1)
+			.then(function(data){
+				var intNewStacks = data.new_stack_ids.length;
+				if (intNewStacks) {
+					for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+						arrCrumbs.pop(); // take the nulls off the end
 					}
-					cleanUpTempStacks();
+					var
+						intCrumbs = arrCrumbs.length,
+						intParent = arrCrumbs[intCrumbs - 1] * 1;
+					for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+						var intStack = data.new_stack_ids[intItr] * 1;
+						arrCrumbs.push(intStack);
+						if (!app.data.stacks[intParent])
+							app.data.stacks[intParent] = [];
+						var objNewStack = {
+							stack_id: intStack,
+							parent_id: intParent,
+							is_url: 0,
+							nickname: arrCrumbsValues[intItr + intCrumbs],
+							value: "",
+							order_id: app.data.stacks[intParent].length + 1
+						};
+						arrTempStacks[intStack] = intParent;
+						app.data.stacks[intParent].push(objNewStack);
+						intParent = intStack;
+					}
+					arrLastCrumbs = arrCrumbs.slice(0);
+					arrLastCrumbsValues = arrCrumbsValues.slice(0);
 				}
-			});
+				cleanUpTempStacks();
+			})
+			.catch(function(error){
+
+			})
 			arrLastCrumbs = arrCrumbs.slice(0);
 			arrLastCrumbsValues = arrCrumbsValues.slice(0);
 		}

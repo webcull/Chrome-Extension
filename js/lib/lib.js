@@ -1,53 +1,83 @@
-
-function getCookies(domain, name, callback) {
-	chrome.cookies.get({ "url": domain, "name": name }, function (cookie) {
-		if (callback) {
-			callback(cookie.value);
-		}
-	});
+class WebCullError extends Error {
+	constructor(message, cause) {
+		super(message);
+		this.cause = cause;
+		this.code = cause
+		this.name = 'WebCullError';
+	}
 }
-var arrDefaultParams = {};
+var arrDefaultParams = {},
+	ERRORS = {
+		'NO_COOKIE': {
+			code: 'NO_COOKIE',
+			msg: 'No cookie was found'
+		},
+		'GET_TAB_FAILED': {
+			code: 'GET_TAB_FAILED',
+			msg: 'Failed to get tab'
+		}
+	};
 
-async function sessionPost(arrParams) {
-	var callback = async function (session_hash) {
+async function async_getCookies(domain, name) {
+	return new Promise(function (resolve, reject) {
+		chrome.cookies.get({ "url": domain, "name": name }, function (cookie) {
+			if (cookie) {
+				resolve(cookie.value);
+			}
+			reject(new WebCullError(ERRORS.NO_COOKIE.msg, ERRORS.NO_COOKIE.code))
+
+		});
+	})
+}
+async function async_sessionPost(arrParams) {
+	return new Promise(function (resolve, reject) {
+		async_getCookies("https://webcull.com", "__DbSessionNamespaces").then(function (session_hash) {
 			if (arrDefaultParams) $.extend(arrParams.post, arrDefaultParams);
 			$.extend(arrParams.post, { __DbSessionNamespaces: session_hash });
-			try {
-				var request = await fetch(arrParams.url, {
-					method: 'post',
-					headers: { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" },
-					body: $.queryString(arrParams.post)
+			fetch(arrParams.url, {
+				method: 'post',
+				headers: { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" },
+				body: $.queryString(arrParams.post)
+			})
+				.then(function (response) {
+					return response.text()
 				})
-				var data = await request.text();
-				var mixedData = JSON.parse(data);
-				if (arrParams.success) arrParams.success(mixedData);
-			} catch (error) {
-				if (arrParams.failure) { arrParams.failure(error) }
-				//else { throw new Error(error) }
-			} finally {}
-		};
-		
-	getCookies("https://webcull.com", "__DbSessionNamespaces", callback);
+				.then(function (response) {
+					var mixedData = JSON.parse(response);
+					resolve(mixedData)
+				})
+				.catch(function (erorr) {
+					reject(erorr)
+				})
+		}).catch(function (error) {
+			reject(error)
+		})
+	})
+
 }
-async function sessionPostWithRetries(arrParams, retries = 0, delayMs = 15) {
-	var promise = sessionPost(arrParams);
+async function async_getTab() {
+	return new Promise(function (resolve, reject) {
+		chrome.tabs.getSelected(null, function (tab) {
+			if (tab) resolve(tab);
+			reject(new WebCullError(ERRORS.GET_TAB_FAILED.code, ERRORS.GET_TAB_FAILED.msg))
+		});
+	})
+}
+async function async_sessionPostWithRetries(arrParams, retries = 0, delayMs = 15) {
+	var promise = async_sessionPost(arrParams);
 	for (var i = 0; i < retries; i++) {
 		promise = promise.catch(function (err) {
 			return new Promise((resolve, reject) => {
 				setTimeout(reject.bind(null, err), delayMs);
 			});
 		}).catch(function (err) {
-			return sessionPost(arrParams);
+			return async_sessionPost(arrParams);
 		});
 	}
 	return promise;
+
 }
 
-function getTab(fnCallback) {
-	chrome.tabs.getSelected(null, function (tab) {
-		fnCallback(tab);
-	});
-}
 function dblEncode(val) {
 	return encodeURIComponent(encodeURIComponent(val));
 }

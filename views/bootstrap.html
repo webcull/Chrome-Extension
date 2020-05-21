@@ -9,11 +9,13 @@
 	<script src="../js/lib/paging.js"></script>
 	<script src="../js/pages/accounts-page.js"></script>
 	<script src="../js/pages/bookmark-page.js"></script>
+	<script src="../js/pages/network-page.js"></script>
 	<script src="../js/bootstrap.js"></script>
 	<link rel="stylesheet" href="../css/boot.css" type="text/css" />
 	<link rel="stylesheet" href="../css/loading-page.css" type="text/css" />
 	<link rel="stylesheet" href="../css/accounts-page.css" type="text/css" />
 	<link rel="stylesheet" href="../css/bookmark-page.css" type="text/css" />
+	<link rel="stylesheet" href="../css/network-page.css" type="text/css">
 	<link href="https://fonts.googleapis.com/css?family=Noto+Sans&display=swap" rel="stylesheet">
 </head>
 
@@ -61,8 +63,7 @@
 				</div>
 				<div class='placeholder'>
 					<div class='placeholder-label'>Website URL</div>
-					<input class='placeholder-input initStackUpdate'  id="bookmark-url-input"
-						name="value" type="text">
+					<input class='placeholder-input initStackUpdate' id="bookmark-url-input" name="value" type="text">
 				</div>
 				<!--input placeholder="Title" id="bookmark-nickname" class="details-input" type="text"><br>
 				<input placeholder="URL" id="bookmark-value" class="details-input" type="text"-->
@@ -86,6 +87,12 @@
 					type="text"></textarea>
 			</div>
 		</div>
+	</div>
+	<div class="page network-page" id="network-page">
+		<span class="logo-container"><img src="../images//cloud-error-128.svg"></span>
+		<span id="error-type"></span><br>
+		<span id="error-msg"></span>
+		<div class="action-button"><button id="action"></button></div>
 	</div>
 </body>
 
