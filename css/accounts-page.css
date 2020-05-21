@@ -1,0 +1,35 @@
+#accounts-page {
+    text-align: center;
+    background-color: #3b99fc;
+    height: fit-content;
+    color: white;
+    font-family: monospace;
+    font: inherit;
+
+}
+
+#accounts-page .logo-container {
+    text-align: center;
+    display: block;
+    padding: 30px;
+}
+
+#accounts-page .signin-button {
+    padding: 30px;
+    color: white;
+
+}
+
+#accounts-page .signin-button button {
+    height: 45px;
+    width: 145px;
+    border-radius: 8px;
+    background-color: white;
+    -webkit-transition: background 1s; 
+    transition: background 1s;
+    font-size: large;
+}
+
+#accounts-page .signin-button button:hover {
+    background-color: lightgray;
+}

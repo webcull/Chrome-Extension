@@ -40,7 +40,6 @@ $(function () {
 		strEvents = 'keyup.stackUpdate click.stackUpdate blur.stackUpdate change.stackUpdate',
 		refUpdateDelay,
 		strCurrentValue = $this.val();
-		console.log($this);
 		if ($this.hasClass('stackUpdate'))
 			return $this;
 		$this

@@ -1,5 +1,8 @@
-<html>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+
 <head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 	<script src="../js/lib/q.js"></script>
 	<script src="../js/lib/lib.js"></script>
 	<script src="../js/lib/plugins.js"></script>
@@ -13,12 +16,17 @@
 	<link rel="stylesheet" href="../css/bookmark-page.css" type="text/css" />
 	<link href="https://fonts.googleapis.com/css?family=Noto+Sans&display=swap" rel="stylesheet">
 </head>
+
 <body>
 	<div class="page loading-page" id="loading-page">
 		<div class="loader-1 loader"><span></span></div>
 		<div class="loading-text">Loading account...</div>
 	</div>
-	<div class="page accounts-page" id="accounts-page"></div>
+	<div class="page accounts-page" id="accounts-page">
+		<span class="logo-container"><img src="../images//output-onlinepngtools.png"></span>
+		<span>Sign in to WebCull <br> to continue</span>
+		<div class="signin-button"><button id="sign-in">Sign in</button></div>
+	</div>
 	<div class="page bookmark-page" id="bookmark-page">
 		<div id="progress-bar">
 			<div id="progress-bar-text">Loading...</div>
@@ -31,7 +39,7 @@
 			<div id="account-options">
 				<div id="account-user"></div>
 				<div id="account-buttons">
-					<a href="#" class="account-button switch-user" id='bookmark-switch-user' title="Switch user"></a> 
+					<a href="#" class="account-button switch-user" id='bookmark-switch-user' title="Switch user"></a>
 					<a href="#" class="account-button logout" id='bookmark-logout' title="Logout"></a>
 				</div>
 			</div>
@@ -48,11 +56,13 @@
 			<div id="bookmark-values">
 				<div class='placeholder'>
 					<div class='placeholder-label'>Title</div>
-					<input class='placeholder-input initStackUpdate' id="bookmark-title-input" name="nickname" type="text">
+					<input class='placeholder-input initStackUpdate' id="bookmark-title-input" name="nickname"
+						type="text">
 				</div>
 				<div class='placeholder'>
 					<div class='placeholder-label'>Website URL</div>
-					<input class='placeholder-input initStackUpdate' readonly="readonly" id="bookmark-url-input" name="value" type="text">
+					<input class='placeholder-input initStackUpdate' readonly="readonly" id="bookmark-url-input"
+						name="value" type="text">
 				</div>
 				<!--input placeholder="Title" id="bookmark-nickname" class="details-input" type="text"><br>
 				<input placeholder="URL" id="bookmark-value" class="details-input" type="text"-->
@@ -72,9 +82,11 @@
 			</div>
 			<div class='placeholder textarea'>
 				<div class='placeholder-label'>Notes</div>
-				<textarea id="bookmark-notes-input" class='placeholder-input initStackUpdate' name="notes" type="text"></textarea>
+				<textarea id="bookmark-notes-input" class='placeholder-input initStackUpdate' name="notes"
+					type="text"></textarea>
 			</div>
 		</div>
 	</div>
 </body>
+
 </html>

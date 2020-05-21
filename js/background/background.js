@@ -20,9 +20,7 @@ function initalizeAccount() {
 	sessionPostWithRetries(
 		{
 			url: "https://webcull.com/api/load",
-			post: {
-
-			},
+			post: {},
 			success: function (arrData) {
 				if (arrData.no_user)
 					return;
