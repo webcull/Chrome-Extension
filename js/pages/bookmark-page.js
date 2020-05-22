@@ -36,7 +36,8 @@ pages['bookmark-page'] = function ($self) {
 			app.urls[strURL] = 1;
 			app.alterIcon(strURL);
 			// get the current session id
-			app.backgroundPost({
+			app.backgroundPost(
+				{
 				url : "https://webcull.com/api/autosavelink",
 				post : {
 					url : strURL
@@ -53,13 +54,17 @@ pages['bookmark-page'] = function ($self) {
 					$progressBar.addClass('response-recieved');
 					$progressBar.addClass('assets-loaded');
 					$("#account-user").html(arrData.user.name);
-					if (arrData.user.icon)
-						$("#account-icon").addClass('custom').css({
-							'background-image' : "url('https://webcull.com/repository/images/users/avatar/" + arrData.user.icon + "')"
-						});
-					var 
-					$bookmarkStatus = $("#bookmark-status"),
-					objBookmark = app.getBookmark();
+					if (arrData.user.icon) {
+						var css = {
+							'background-image' : "url('https://webcull.com" + arrData.user.icon + "')"
+						};
+						if(arrData.user.icon == "/static/images/icons/general/temp5.png") {
+							css.filter = 'invert(1)';
+						}
+						$("#account-icon").addClass('custom').css(css);
+					}
+					var $bookmarkStatus = $("#bookmark-status"),
+						objBookmark = app.getBookmark();
 					if (objBookmark.user) {
 						$bookmarkStatus.html("Bookmark saved <a href='#' class='bookmark-status-link red' id='removeBookmark'>Undo</a>");
 					} else {
@@ -117,7 +122,9 @@ pages['bookmark-page'] = function ($self) {
 						});
 					}
 				}
-			});
+			},
+			1
+			);
 		}
 	});
 };
