@@ -59,7 +59,7 @@ pages['bookmark-page'] = function ($self) {
 							'background-image' : "url('https://webcull.com" + arrData.user.icon + "')"
 						};
 						if(arrData.user.icon == "/static/images/icons/general/temp5.png") {
-							css.filter = 'invert(1)';
+							css.filter = 'brightness(1000%)';
 						}
 						$("#account-icon").addClass('custom').css(css);
 					}
