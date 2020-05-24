@@ -5,7 +5,7 @@ var background = chrome.extension.getBackgroundPage(),
 
 /* init process */
 pages['bookmark-page'] = function ($self) {
-	async_getTab()
+	getTab()
 		.then(function (tab) {
 			var strURL = tab.url.replace(/ /, '+');
 			if (0 == 1 && !strURL.match(/http(s)?:\/\//i)) {
@@ -37,8 +37,9 @@ pages['bookmark-page'] = function ($self) {
 							// FIX CHX-004 show accounts sign in 
 							// if not logged in
 							$progressBar.addClass('response-recieved').addClass('assets-loaded').addClass('complete');
-							paging("accounts-page")
-							return
+							// fire loaded event 
+							app.loaded()
+							return paging("accounts-page")
 						}
 						app.data = arrData;
 						app.processURLs();
@@ -116,7 +117,7 @@ pages['bookmark-page'] = function ($self) {
 									if (objResponse.nickname)
 										$("#bookmark-title-input").val(objResponse.nickname).trigger('update');
 								})
-								.catch(err=>{console.log(err)})
+								.catch(err => { console.log(err) })
 						}
 						$progressBar.removeClass('complete')
 							.removeClass('assets-loaded')
@@ -131,23 +132,23 @@ pages['bookmark-page'] = function ($self) {
 							.removeClass('assets-loaded')
 							.removeClass('response-recieved')
 							.removeClass('loading-started')
+						// fire loaded event 
+						app.loaded()
 						if (error.constructor.name === 'WebCullError') {
-							if(error.code === 'NO_COOKIE')return paging("accounts-page")
+							if (error.code === 'NO_COOKIE') return paging("accounts-page")
 						}
-						else { 
-							var context ={
-								callback: function(){
+						else {
+							var context = {
+								callback: function () {
 									paging('bookmark-page')
 								},
-								title:'Request Error',
+								title: 'Request Error',
 								msg: 'An Error ocurred while saving bookmark. Ensure you have an Active Internet connection',
 								action: 'Try Again'
 
 							}
-							return paging('network-page' , context)
-						 }
-
-
+							return paging('network-page', context)
+						}
 					})
 			}
 		})
@@ -265,13 +266,13 @@ $(function () {
 					url: "https://webcull.com/api/remove",
 					post: {
 						stack_id: arrDeleteItems
-				}},1)
-				.then(function(response){})
-				.catch(error=>{console.log(error)})
+					}
+				}, 1)
+					.then(function (response) { })
+					.catch(error => { console.log(error) })
 		}
 		function didCrumbsChange() {
-			var
-				strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/, ''),
+			var strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/, ''),
 				strLastCrumbsString = arrLastCrumbsValues.join("\t").replace(/\t+$/, '');
 			if (strCrumbsString != strLastCrumbsString)
 				return true;
@@ -292,41 +293,42 @@ $(function () {
 					arrCrumbs: arrCrumbs,
 					arrCrumbsValues: arrCrumbsValues,
 					stack_id: objBookmark.stack_id
-				}},1)
-			.then(function(data){
-				var intNewStacks = data.new_stack_ids.length;
-				if (intNewStacks) {
-					for (var intItr = 0; intItr != intNewStacks; ++intItr) {
-						arrCrumbs.pop(); // take the nulls off the end
-					}
-					var
-						intCrumbs = arrCrumbs.length,
-						intParent = arrCrumbs[intCrumbs - 1] * 1;
-					for (var intItr = 0; intItr != intNewStacks; ++intItr) {
-						var intStack = data.new_stack_ids[intItr] * 1;
-						arrCrumbs.push(intStack);
-						if (!app.data.stacks[intParent])
-							app.data.stacks[intParent] = [];
-						var objNewStack = {
-							stack_id: intStack,
-							parent_id: intParent,
-							is_url: 0,
-							nickname: arrCrumbsValues[intItr + intCrumbs],
-							value: "",
-							order_id: app.data.stacks[intParent].length + 1
-						};
-						arrTempStacks[intStack] = intParent;
-						app.data.stacks[intParent].push(objNewStack);
-						intParent = intStack;
-					}
-					arrLastCrumbs = arrCrumbs.slice(0);
-					arrLastCrumbsValues = arrCrumbsValues.slice(0);
 				}
-				cleanUpTempStacks();
-			})
-			.catch(function(error){
+			}, 1)
+				.then(function (data) {
+					var intNewStacks = data.new_stack_ids.length;
+					if (intNewStacks) {
+						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+							arrCrumbs.pop(); // take the nulls off the end
+						}
+						var
+							intCrumbs = arrCrumbs.length,
+							intParent = arrCrumbs[intCrumbs - 1] * 1;
+						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+							var intStack = data.new_stack_ids[intItr] * 1;
+							arrCrumbs.push(intStack);
+							if (!app.data.stacks[intParent])
+								app.data.stacks[intParent] = [];
+							var objNewStack = {
+								stack_id: intStack,
+								parent_id: intParent,
+								is_url: 0,
+								nickname: arrCrumbsValues[intItr + intCrumbs],
+								value: "",
+								order_id: app.data.stacks[intParent].length + 1
+							};
+							arrTempStacks[intStack] = intParent;
+							app.data.stacks[intParent].push(objNewStack);
+							intParent = intStack;
+						}
+						arrLastCrumbs = arrCrumbs.slice(0);
+						arrLastCrumbsValues = arrCrumbsValues.slice(0);
+					}
+					cleanUpTempStacks();
+				})
+				.catch(function (error) {
 
-			})
+				})
 			arrLastCrumbs = arrCrumbs.slice(0);
 			arrLastCrumbsValues = arrCrumbsValues.slice(0);
 		}
