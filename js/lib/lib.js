@@ -18,7 +18,7 @@ var arrDefaultParams = {},
 		}
 	};
 
-async function async_getCookies(domain, name) {
+async function getCookies(domain, name) {
 	return new Promise(function (resolve, reject) {
 		chrome.cookies.get({ "url": domain, "name": name }, function (cookie) {
 			if (cookie) {
@@ -29,9 +29,9 @@ async function async_getCookies(domain, name) {
 		});
 	})
 }
-async function async_sessionPost(arrParams) {
+async function sessionPost(arrParams) {
 	return new Promise(function (resolve, reject) {
-		async_getCookies("https://webcull.com", "__DbSessionNamespaces").then(function (session_hash) {
+		getCookies("https://webcull.com", "__DbSessionNamespaces").then(function (session_hash) {
 			if (arrDefaultParams) $.extend(arrParams.post, arrDefaultParams);
 			$.extend(arrParams.post, { __DbSessionNamespaces: session_hash });
 			fetch(arrParams.url, {
@@ -55,7 +55,7 @@ async function async_sessionPost(arrParams) {
 	})
 
 }
-async function async_getTab() {
+async function getTab() {
 	return new Promise(function (resolve, reject) {
 		chrome.tabs.getSelected(null, function (tab) {
 			if (tab) resolve(tab);
@@ -63,15 +63,15 @@ async function async_getTab() {
 		});
 	})
 }
-async function async_sessionPostWithRetries(arrParams, retries = 0, delayMs = 15) {
-	var promise = async_sessionPost(arrParams);
+async function sessionPostWithRetries(arrParams, retries = 0, delayMs = 15) {
+	var promise = sessionPost(arrParams);
 	for (var i = 0; i < retries; i++) {
 		promise = promise.catch(function (err) {
 			return new Promise((resolve, reject) => {
 				setTimeout(reject.bind(null, err), delayMs);
 			});
 		}).catch(function (err) {
-			return async_sessionPost(arrParams);
+			return sessionPost(arrParams);
 		});
 	}
 	return promise;
