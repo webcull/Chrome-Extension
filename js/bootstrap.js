@@ -1,5 +1,10 @@
 $(function () {
-	paging('bookmark-page');
+	if (navigator.onLine) {
+		paging('bookmark-page');
+	} else {
+		paging('network-page')
+	}
+
 });
 
 
@@ -33,5 +38,5 @@ console.log(chrome.cookies);
 */
 
 /*$(function () {
-	
+
 });*/

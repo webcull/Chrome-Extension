@@ -1,4 +1,4 @@
-#accounts-page {
+#network-page {
     text-align: center;
     background-color: #3b99fc;
     height: fit-content;
@@ -8,19 +8,19 @@
 
 }
 
-#accounts-page .logo-container {
+#network-page .logo-container {
     text-align: center;
     display: block;
     padding: 30px;
 }
 
-#accounts-page .signin-button {
+#network-page .action-button {
     padding: 30px;
     color: white;
 
 }
 
-#accounts-page .signin-button button {
+#network-page .action-button button {
     height: 45px;
     width: 145px;
     border-radius: 8px;
@@ -30,6 +30,9 @@
     font-size: large;
 }
 
-#accounts-page .signin-button button:hover {
+#network-page .action-button button:hover {
     background-color: lightgray;
+}
+#network-page #error-type{
+    font-weight: bold;
 }

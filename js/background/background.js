@@ -12,26 +12,29 @@ app.loaded = function () {
 		delete app.loadedPromises[intItr];
 	}
 };
+app.getBookmark = function () {
+	var objBookmark = null;
+	if (app.data.bookmarks_found)
+		objBookmark = app.data.bookmarks_found[0];
+	if (!objBookmark)
+		objBookmark = app.data;
+	return objBookmark;
+};
 
 app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
 
 function initalizeAccount() {
-	sessionPostWithRetries(
-		{
-			url: "https://webcull.com/api/load",
-			post: {
-
-			},
-			success: function (arrData) {
-				if (arrData.no_user)
-					return;
-				app.data = arrData;
-				processURLs();
-			}
-		},
-		1
-	);
+	sessionPostWithRetries({ url: "https://webcull.com/api/load", post: {}, }, 1)
+		.then(function (arrData) {
+			if (arrData.no_user)
+				return;
+			app.data = arrData;
+			processURLs();
+		})
+		.catch(error => {
+			console.log(error)
+		})
 }
 
 app.processURLs = processURLs;
@@ -50,7 +53,6 @@ function processURLs() {
 
 app.alterIcon = alterIcon;
 function alterIcon(strUrl) {
-	console.log(strUrl);
 	var boolExists = strUrl != "" && app.urls[strUrl];
 	if (boolExists) {
 		chrome.browserAction.setIcon({
@@ -62,7 +64,6 @@ function alterIcon(strUrl) {
 			}
 		});
 	} else {
-		console.log("Doesn't exists");
 		chrome.browserAction.setIcon({
 			path: {
 				"128": "images/logo-gray-128.png"
@@ -75,7 +76,6 @@ function alterIcon(strUrl) {
 // make sure it saves on disconnect
 chrome.runtime.onConnect.addListener(function (externalPort) {
 	externalPort.onDisconnect.addListener(function () {
-		// TODO FIXME  failing
 		app.saveCrumbs();
 	});
 });
