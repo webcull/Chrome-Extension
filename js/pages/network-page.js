@@ -1,7 +1,9 @@
 var NETWORK_DEFAULTS = {
     msg: 'There was a network connection error',
     title: 'Network Error',
-    callback: function () { },
+    callback: function () {
+        paging('bookmark-page')
+    },
     action: 'RETRY'
 },
     isFunction = function (obj) {
