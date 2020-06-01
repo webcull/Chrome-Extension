@@ -1,145 +1,173 @@
 chrome.runtime.connect();
 
-var 
-background = chrome.extension.getBackgroundPage(),
-app = background.app;
-
-// init
-app.getBookmark = function () {
-	var objBookmark = null;
-	if (app.data.bookmarks_found)
-		objBookmark = app.data.bookmarks_found[0];
-	if (!objBookmark)
-		objBookmark = app.data;
-	return objBookmark;
-};
+var background = chrome.extension.getBackgroundPage(),
+	app = background.app;
 
 /* init process */
 pages['bookmark-page'] = function ($self) {
-	getTab(function (tab) {
-		var strURL = tab.url.replace(/ /, '+');
-		if (0==1 && !strURL.match(/http(s)?:\/\//i)) {
-			paging("loading-page");
-			// not http or https so just take user to webcull
-			chrome.tabs.update({
-			     url: "https://webcull.com"
-			});
-		} else {
-			$("html,body").removeClass('is-init');
-			/* Try to save the current URL as a bookmark */
-			// Get the current URL
-			$("body").removeClass('is-loaded');
-			var $progressBar = $("#progress-bar");
-			$.delay(1, function () {
-				$progressBar.addClass('loading-started');
-			});
-			app.urls[strURL] = 1;
-			app.alterIcon(strURL);
-			// get the current session id
-			app.backgroundPost(
-				{
-				url : "https://webcull.com/api/autosavelink",
-				post : {
-					url : strURL
-				},
-				success : function (arrData) {
-					if (arrData.no_user) {
-						chrome.tabs.update({
-						     url: "https://webcull.com/accounts"
-						});
-						window.close();
-					}
-					app.data = arrData;
-					app.processURLs();
-					$progressBar.addClass('response-recieved');
-					$progressBar.addClass('assets-loaded');
-					$("#account-user").html(arrData.user.name);
-					if (arrData.user.icon) {
-						var css = {
-							'background-image' : "url('https://webcull.com" + arrData.user.icon + "')"
-						};
-						if(arrData.user.icon == "/static/images/icons/general/temp5.png") {
-							css.filter = 'brightness(1000%)';
-						}
-						$("#account-icon").addClass('custom').css(css);
-					}
-					var $bookmarkStatus = $("#bookmark-status"),
-						objBookmark = app.getBookmark();
-					if (objBookmark.user) {
-						$bookmarkStatus.html("Bookmark saved <a href='#' class='bookmark-status-link red' id='removeBookmark'>Undo</a>");
-					} else {
-						var intBookmarksFound = arrData.bookmarks_found.length;
-						$bookmarkStatus.html("Already saved in " + intBookmarksFound + " location" + (intBookmarksFound==1?'':'s') + " <a href='#' class='bookmark-status-link red' id='removeBookmark'>Remove</a>");
-					}
-					$bookmarkStatus.find("#removeBookmark").click(function () {
-						//if (arrData.bookmarks_found && arrData.bookmarks_found.length) {
-							delete app.urls[strURL];
-							app.alterIcon(strURL);
-						//}
-						app.backgroundPost({
-							url : "https://webcull.com/api/remove",
-							post : {
-								stack_id : objBookmark.stack_id
-							},
-							success : function () {
-
-							}
-						});
-						window.close();
-					});
-					if (objBookmark.nickname)
-						$("#bookmark-title-input").val(objBookmark.nickname).trigger('update');
-					if (objBookmark.value)
-						$("#bookmark-url-input").val(objBookmark.value).trigger('update');
-					if (objBookmark.tags)
-						$("#bookmark-keywords-input").val(objBookmark.tags).trigger('update');
-					if (objBookmark.notes)
-						$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
-					if (objBookmark.icon)
-						$("#bookmark-icon").css({
-							'background-image' : 'url("https://webcull.com/repository/images/websites/icons/' + objBookmark.icon + '")'
-						});
-					$("body").addClass('is-loaded');
-					$progressBar.addClass('complete');
-					app.loaded();
-					if (!objBookmark.parse_date || objBookmark.parse_date == "") {
-						$("#bookmark-icon").addClass("loading");
-						//return;
-						app.backgroundPost({
-							url : "https://webcull.com/api/process",
-							post : {
-								web_data_id : objBookmark.web_data_id
-							},
-							success : function (objResponse) {
-								$("#bookmark-icon").removeClass("loading");
-								if (objResponse.icon)
-									$("#bookmark-icon").css({
-										'background-image' : 'url("https://webcull.com/repository/images/websites/icons/' + objResponse.icon + '")'
-									});
-								if (objResponse.nickname)
-									$("#bookmark-title-input").val(objResponse.nickname).trigger('update');
-							}
-						});
+	getTab()
+		.then(function (tab) {
+			var strURL = tab.url.replace(/ /, '+');
+			if (0 == 1 && !strURL.match(/http(s)?:\/\//i)) {
+				paging("loading-page");
+				// not http or https so just take user to webcull
+				chrome.tabs.update({
+					url: "https://webcull.com"
+				});
+			} else {
+				$("html,body").removeClass('is-init');
+				/* Try to save the current URL as a bookmark */
+				// Get the current URL
+				$("body").removeClass('is-loaded');
+				var $progressBar = $("#progress-bar");
+				$.delay(1, function () {
+					$progressBar.addClass('loading-started');
+				});
+				app.urls[strURL] = 1;
+				app.alterIcon(strURL);
+				var post = {
+					url: "https://webcull.com/api/autosavelink",
+					post: {
+						url: strURL
 					}
 				}
-			},
-			1
-			);
-		}
-	});
-};
+				app.backgroundPost(post, 1)
+					.then(function (arrData) {
+						if (arrData.no_user) {
+							// FIX CHX-004 show accounts sign in 
+							// if not logged in
+							$progressBar.addClass('response-recieved').addClass('assets-loaded').addClass('complete');
+							// fire loaded event 
+							app.loaded()
+							return paging("accounts-page")
+						}
+						app.data = arrData;
+						app.processURLs();
+						$progressBar.addClass('response-recieved');
+						$progressBar.addClass('assets-loaded');
+						$("#account-user").html(arrData.user.name);
+						if (arrData.user.icon) {
+							var css = {
+								'background-image': "url('https://webcull.com" + arrData.user.icon + "')"
+							};
+							if (arrData.user.icon == "/static/images/icons/general/temp5.png") {
+								css.filter = 'brightness(1000%)';
+							}
+							$("#account-icon").addClass('custom').css(css);
+						}
+						var $bookmarkStatus = $("#bookmark-status"),
+							objBookmark = app.getBookmark();
+						if (objBookmark.user) {
+							$bookmarkStatus.html("Bookmark saved <a href='#' class='bookmark-status-link red' id='removeBookmark'>Undo</a>");
+						} else {
+							var intBookmarksFound = arrData.bookmarks_found.length;
+							$bookmarkStatus.html("Already saved in " + intBookmarksFound + " location" + (intBookmarksFound == 1 ? '' : 's') + " <a href='#' class='bookmark-status-link red' id='removeBookmark'>Remove</a>");
+						}
+						$bookmarkStatus.find("#removeBookmark").click(function () {
+							delete app.urls[strURL];
+							app.alterIcon(strURL);
+							app.backgroundPost({ url: "https://webcull.com/api/remove", post: { stack_id: objBookmark.stack_id } }, 1)
+								.then(function () {
+									// Fix CHX-005
+									$bookmarkStatus.html("Bookmark removed <a href='#' class='bookmark-status-link red' id='addBookmark'>Re-add</a>");
+									$("#bookmark-title-input").attr('disabled', true)
+									$("#bookmark-url-input").attr('disabled', true)
+									$("#bookmark-keywords-input").attr('disabled', true)
+									$("#bookmark-notes-input").attr('disabled', true)
+									$("#save-location-input").attr('disabled', true)
+									$bookmarkStatus.find("#addBookmark").click(function () {
+										$("#bookmark-title-input").removeAttr('disabled')
+										$("#bookmark-url-input").removeAttr('disabled')
+										$("#bookmark-keywords-input").removeAttr('disabled')
+										$("#bookmark-notes-input").removeAttr('disabled')
+										$("#save-location-input").removeAttr('disabled')
+										$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
+										paging('bookmark-page');
+									})
+								})
+								.catch(function (error) {
+									/* Fetch error */
+									console.log(error)
+								})
+						});
+						if (objBookmark.nickname)
+							$("#bookmark-title-input").val(objBookmark.nickname).trigger('update');
+						if (objBookmark.value)
+							$("#bookmark-url-input").val(objBookmark.value).trigger('update');
+						if (objBookmark.tags)
+							$("#bookmark-keywords-input").val(objBookmark.tags).trigger('update');
+						if (objBookmark.notes)
+							$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
+						if (objBookmark.icon)
+							$("#bookmark-icon").css({
+								'background-image': 'url("https://webcull.com/repository/images/websites/icons/' + objBookmark.icon + '")'
+							});
+						$("body").addClass('is-loaded');
+						$progressBar.addClass('complete');
+						app.loaded();
+						if (!objBookmark.parse_date || objBookmark.parse_date == "") {
+							$("#bookmark-icon").addClass("loading");
+							app.backgroundPost({ url: "https://webcull.com/api/process", post: { web_data_id: objBookmark.web_data_id } }, 1)
+								.then(function (objResponse) {
+									$("#bookmark-icon").removeClass("loading");
+									if (objResponse.icon)
+										$("#bookmark-icon").css({
+											'background-image': 'url("https://webcull.com/repository/images/websites/icons/' + objResponse.icon + '")'
+										});
+									if (objResponse.nickname)
+										$("#bookmark-title-input").val(objResponse.nickname).trigger('update');
+								})
+								.catch(err => { console.log(err) })
+						}
+						$progressBar.removeClass('complete')
+							.removeClass('assets-loaded')
+							.removeClass('response-recieved')
+							.removeClass('loading-started')
+
+					}).catch(function (error) {
+						/* Fetch error */
+						// Task: CHX-007
+						// show retry page
+						$progressBar.removeClass('complete')
+							.removeClass('assets-loaded')
+							.removeClass('response-recieved')
+							.removeClass('loading-started')
+						// fire loaded event 
+						app.loaded()
+						if (error.constructor.name === 'WebCullError') {
+							if (error.code === 'NO_COOKIE') return paging("accounts-page")
+						}
+						else {
+							var context = {
+								callback: function () {
+									paging('bookmark-page')
+								},
+								title: 'Request Error',
+								msg: 'An Error ocurred while saving bookmark. Ensure you have an Active Internet connection',
+								action: 'Try Again'
+
+							}
+							return paging('network-page', context)
+						}
+					})
+			}
+		})
+		.catch(function (error) {
+			/* Failed t get tab */
+			console.log(error)
+		})
+}
 /* modules and binders */
 $(function () {
-
 	$("#bookmark-switch-user").click(function () {
 		chrome.tabs.update({
-		     url: "https://webcull.com/accounts/switch"
+			url: "https://webcull.com/accounts/switch"
 		});
 		window.close();
 	});
 	$("#bookmark-logout").click(function () {
 		chrome.tabs.update({
-		     url: "https://webcull.com/logout/index/acc/" + app.data.user.hash + "/"
+			url: "https://webcull.com/logout/index/acc/" + app.data.user.hash + "/"
 		});
 		window.close();
 	});
@@ -147,33 +175,29 @@ $(function () {
 	$(".initStackUpdate").each(function () {
 		$(this).stackUpdate();
 	});
-
 	/* bookmark location breadcrumbs binder */
-
 	(function () {
 		// init breadcrumbs
-		var 
-		$input = $("#save-location-input"),
-		arrCrumbs = [0],
-		arrCrumbsValues = [""],
-		arrLastCrumbs,
-		arrLastCrumbsValues,
-		boolMenuDropped = false,
-		intOpenMunuIndex = 0,
-		$saveLocationDrop = $("<div id='save-location-drop'></div>");
-		$input.trigger('update'),
-		intMenuItem = 0,
-		intSelectedCrumb = 0,
-		$empty = null,
-		// a list of ids that have been created
-		// stacks should be removed if they were created here but are no longer part of the list
-		arrTempStacks = {}; 
+		var $input = $("#save-location-input"),
+			arrCrumbs = [0],
+			arrCrumbsValues = [""],
+			arrLastCrumbs,
+			arrLastCrumbsValues,
+			boolMenuDropped = false,
+			intOpenMunuIndex = 0,
+			$saveLocationDrop = $("<div id='save-location-drop'></div>"),
+			intMenuItem = 0,
+			intSelectedCrumb = 0,
+			$empty = null,
+			// a list of ids that have been created
+			// stacks should be removed if they were created here but are no longer part of the list
+			arrTempStacks = {};
+		$input.trigger('update')
 		app.loadedPromises.push(function () {
 			// work backwords to build the bread crumbs
-			var 
-			arrCrumbsFound = [],
-			objBookmark = app.getBookmark(),
-			objStackIdLookup = {};
+			var arrCrumbsFound = [],
+				objBookmark = app.getBookmark(),
+				objStackIdLookup = {};
 			if (objBookmark) {
 				// for speed create an index of all stack ids so that we can look up parent id
 				for (var intParent in app.data.stacks) {
@@ -183,8 +207,7 @@ $(function () {
 				}
 				// reconstruct crumbs from data
 				// check if bookmark is in root if not do nothing
-				var 
-				intParent = objBookmark.parent_id;
+				var intParent = objBookmark.parent_id;
 				if (intParent != 0) {
 					// if not then reconstruct the crumbs from parent and stack id
 					arrCrumbs = [null];
@@ -192,8 +215,8 @@ $(function () {
 						var objStack = objStackIdLookup[intParent];
 						if (!objStack)
 							break;
-						intParent = objStack.parent_id*1;
-						arrCrumbs.unshift(objStack.stack_id*1);
+						intParent = objStack.parent_id * 1;
+						arrCrumbs.unshift(objStack.stack_id * 1);
 						arrCrumbsValues.unshift(objStack.nickname);
 					};
 					arrCrumbs.unshift(0);
@@ -208,10 +231,10 @@ $(function () {
 		// if they are, initalize a the deletion of them
 		function cleanUpTempStacks() {
 			var intCrumbs = arrCrumbs.length,
-			arrDeleteItems = [];
+				arrDeleteItems = [];
 			for (var intStack in arrTempStacks) {
 				var boolFound = false;
-				for (var intItr=0; intItr!=intCrumbs; ++intItr) {
+				for (var intItr = 0; intItr != intCrumbs; ++intItr) {
 					var intCrumb = arrCrumbs[intItr];
 					if (intStack == intCrumb) {
 						boolFound = true;
@@ -227,7 +250,7 @@ $(function () {
 					if (intCurrent == 1) {
 						delete app.data.stacks[intParent];
 					} else {
-						for (var intItr=0;intItr!=intCurrent;++intItr) {
+						for (var intItr = 0; intItr != intCurrent; ++intItr) {
 							var objStack = app.data.stacks[intParent][intItr];
 							if (!objStack)
 								continue;
@@ -240,23 +263,21 @@ $(function () {
 			}
 			if (arrDeleteItems.length)
 				app.backgroundPost({
-					url : "https://webcull.com/api/remove",
-					post : {
-						stack_id : arrDeleteItems
-					},
-					success : function () {
-
+					url: "https://webcull.com/api/remove",
+					post: {
+						stack_id: arrDeleteItems
 					}
-				});
+				}, 1)
+					.then(function (response) { })
+					.catch(error => { console.log(error) })
 		}
 		function didCrumbsChange() {
-			var
-			strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/,''),
-			strLastCrumbsString = arrLastCrumbsValues.join("\t").replace(/\t+$/,'');
+			var strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/, ''),
+				strLastCrumbsString = arrLastCrumbsValues.join("\t").replace(/\t+$/, '');
 			if (strCrumbsString != strLastCrumbsString)
 				return true;
-			strCrumbsString = arrCrumbs.join("\t").replace(/\t+$/,'');
-			strLastCrumbsString = arrLastCrumbs.join("\t").replace(/\t+$/,'');
+			strCrumbsString = arrCrumbs.join("\t").replace(/\t+$/, '');
+			strLastCrumbsString = arrLastCrumbs.join("\t").replace(/\t+$/, '');
 			if (strCrumbsString != strLastCrumbsString)
 				return true;
 		}
@@ -267,33 +288,34 @@ $(function () {
 			}
 			var objBookmark = app.getBookmark();
 			app.backgroundPost({
-				url : "https://webcull.com/api/savelocation",
-				post : {
-					arrCrumbs : arrCrumbs,
-					arrCrumbsValues : arrCrumbsValues,
-					stack_id : objBookmark.stack_id
-				},
-				success : function (data) {
+				url: "https://webcull.com/api/savelocation",
+				post: {
+					arrCrumbs: arrCrumbs,
+					arrCrumbsValues: arrCrumbsValues,
+					stack_id: objBookmark.stack_id
+				}
+			}, 1)
+				.then(function (data) {
 					var intNewStacks = data.new_stack_ids.length;
 					if (intNewStacks) {
-						for (var intItr=0;intItr!=intNewStacks;++intItr) {
+						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
 							arrCrumbs.pop(); // take the nulls off the end
 						}
-						var 
-						intCrumbs = arrCrumbs.length,
-						intParent = arrCrumbs[intCrumbs-1]*1;
-						for (var intItr=0;intItr!=intNewStacks;++intItr) {
-							var intStack = data.new_stack_ids[intItr]*1;
+						var
+							intCrumbs = arrCrumbs.length,
+							intParent = arrCrumbs[intCrumbs - 1] * 1;
+						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+							var intStack = data.new_stack_ids[intItr] * 1;
 							arrCrumbs.push(intStack);
 							if (!app.data.stacks[intParent])
 								app.data.stacks[intParent] = [];
 							var objNewStack = {
-								stack_id : intStack,
-								parent_id : intParent,
-								is_url : 0,
-								nickname : arrCrumbsValues[intItr+intCrumbs],
-								value : "",
-								order_id : app.data.stacks[intParent].length + 1
+								stack_id: intStack,
+								parent_id: intParent,
+								is_url: 0,
+								nickname: arrCrumbsValues[intItr + intCrumbs],
+								value: "",
+								order_id: app.data.stacks[intParent].length + 1
 							};
 							arrTempStacks[intStack] = intParent;
 							app.data.stacks[intParent].push(objNewStack);
@@ -303,17 +325,19 @@ $(function () {
 						arrLastCrumbsValues = arrCrumbsValues.slice(0);
 					}
 					cleanUpTempStacks();
-				}
-			});
+				})
+				.catch(function (error) {
+
+				})
 			arrLastCrumbs = arrCrumbs.slice(0);
 			arrLastCrumbsValues = arrCrumbsValues.slice(0);
 		}
 		function displayNoStacks() {
-			var intMenuItems = $(".save-location-drop-item:not(.hidden)").length;
-			// find new stacks
-			var arrMissingNicknames = [];
+			var intMenuItems = $(".save-location-drop-item:not(.hidden)").length,
+				// find new stacks
+				arrMissingNicknames = [];
 			var intCrumbs = arrCrumbs.length;
-			for (var intItr=0; intItr!=intCrumbs; ++intItr) {
+			for (var intItr = 0; intItr != intCrumbs; ++intItr) {
 				var intCrumb = arrCrumbs[intItr];
 				if (intCrumb === null) {
 					var strCrumbValue = arrCrumbsValues[intItr];
@@ -340,67 +364,67 @@ $(function () {
 			$saveLocationDrop[0].scrollTop = 0;
 			intMenuItem = intParent;
 			$saveLocationDrop.html('');
-			var 
-			arrStacks = app.data.stacks[intParent],
-			arrBuffer = [];
+			var
+				arrStacks = app.data.stacks[intParent],
+				arrBuffer = [];
 			if (arrStacks) {
 				for (var intStack in arrStacks) {
 					var objStack = arrStacks[intStack];
 					if (objStack.is_url == 0)
 						arrBuffer.push(objStack);
 				}
-				arrBuffer.sort(function(a, b) { 
-					return a.order_id-b.order_id;
+				arrBuffer.sort(function (a, b) {
+					return a.order_id - b.order_id;
 				});
-				var intItr2=0;
+				var intItr2 = 0;
 				for (var intItr in arrBuffer) {
 					var objStack = arrBuffer[intItr];
 					if (objStack.is_url == 1) {
 						continue;
 					}
 					var $item = $("<div class='save-location-drop-item' id='save-location-drop-" + objStack.stack_id + "'>")
-					.click((function (objStack) {
-						return function () {
-							var strVal = $input.val(),
-							arrVals = strVal.split(/\//);
-							arrCrumbs[intOpenMunuIndex+1] = objStack.stack_id*1;
-							arrCrumbsValues[intOpenMunuIndex+1] = objStack.nickname;
-							arrVals[intOpenMunuIndex+1] = objStack.nickname;
-							if (intOpenMunuIndex != arrCrumbs.length-2) {
-								arrVals.length = intOpenMunuIndex+2;
-								arrCrumbs.length = intOpenMunuIndex+2;
-								arrCrumbsValues.length = intOpenMunuIndex+2;
-							}
-							arrVals.push("");
-							$input.val(arrVals.join("/"));
-							processLocationText();
-						};
-					})(objStack))
-					.text(objStack.nickname)
-					.appendTo($saveLocationDrop)
-					.if(intItr2++==0)
-					.addClass('selected');
+						.click((function (objStack) {
+							return function () {
+								var strVal = $input.val(),
+									arrVals = strVal.split(/\//);
+								arrCrumbs[intOpenMunuIndex + 1] = objStack.stack_id * 1;
+								arrCrumbsValues[intOpenMunuIndex + 1] = objStack.nickname;
+								arrVals[intOpenMunuIndex + 1] = objStack.nickname;
+								if (intOpenMunuIndex != arrCrumbs.length - 2) {
+									arrVals.length = intOpenMunuIndex + 2;
+									arrCrumbs.length = intOpenMunuIndex + 2;
+									arrCrumbsValues.length = intOpenMunuIndex + 2;
+								}
+								arrVals.push("");
+								$input.val(arrVals.join("/"));
+								processLocationText();
+							};
+						})(objStack))
+						.text(objStack.nickname)
+						.appendTo($saveLocationDrop)
+						.if(intItr2++ == 0)
+						.addClass('selected');
 				}
 				highlightSelected(intSelectedCrumb);
 			}
 		}
 		// look for any changes in the text and caret location
 		function processLocationText() {
-			var 
-			strVal = $input.val(),
-			arrVals = strVal.split(/\//),
-			intVals = arrVals.length,
-			strLastVal = arrVals[intVals-1],
-			intCaretPos = $input[0].selectionStart,
-			intCaretItem,
-			intValCharPast = 0,
-			strNewKeyword = null;
+			var
+				strVal = $input.val(),
+				arrVals = strVal.split(/\//),
+				intVals = arrVals.length,
+				strLastVal = arrVals[intVals - 1],
+				intCaretPos = $input[0].selectionStart,
+				intCaretItem,
+				intValCharPast = 0,
+				strNewKeyword = null;
 
 			if (
-				arrVals.length<2
+				arrVals.length < 2
 				|| arrVals[0] != ""
 			) {
-				$input.val("/"+strVal);
+				$input.val("/" + strVal);
 				return processLocationText();
 			}
 			if (strVal.match(/\/\//)) {
@@ -410,17 +434,17 @@ $(function () {
 			// keep the crumb buffer in sync with whats in the text
 			// whats in the buffer is always the top priority unless it's undefined and theres a match
 			// text matching must be done through id when possible because duplicate names is a thing
-			for (var intItr=1; intItr!=intVals; intItr++) {
-				var 
-				strTextCrumb = arrVals[intItr], // from text
-				intCrumb = arrCrumbs[intItr], // from mem
-				intParentCrumb = arrCrumbs[intItr-1],
-				strCrumb = arrCrumbsValues[intItr]; // from mem
+			for (var intItr = 1; intItr != intVals; intItr++) {
+				var
+					strTextCrumb = arrVals[intItr], // from text
+					intCrumb = arrCrumbs[intItr], // from mem
+					intParentCrumb = arrCrumbs[intItr - 1],
+					strCrumb = arrCrumbsValues[intItr]; // from mem
 				// if the parent doesnt exist theres nothing to search which means its always new
-				if (intParentCrumb === null && arrCrumbs.length>2) { // no parent
+				if (intParentCrumb === null && arrCrumbs.length > 2) { // no parent
 					arrCrumbs[intItr] = null; // set as new folder
 					arrCrumbsValues[intItr] = strTextCrumb;
-				// if theres not crumb id do a text
+					// if theres not crumb id do a text
 				} else {//} else if (strTextCrumb != strCrumb) { 
 					// optimize process when nothings there
 					if (strTextCrumb == "") {
@@ -431,9 +455,9 @@ $(function () {
 					// didnt match. modify whats in the buffer if it differs from what in the text
 					// text that doesnt match must be considered a change of folder or new folder if it doesnt exist
 					// load the child folders to see if there's something else that does match
-					var 
-					arrStacks = app.data.stacks[intParentCrumb],
-					arrBuffer = [];
+					var
+						arrStacks = app.data.stacks[intParentCrumb],
+						arrBuffer = [];
 					if (!arrStacks) {
 						arrCrumbs[intItr] = null;
 						arrCrumbsValues[intItr] = strTextCrumb;
@@ -444,8 +468,8 @@ $(function () {
 						if (objStack.is_url == 0)
 							arrBuffer.push(objStack);
 					}
-					arrBuffer.sort(function(a, b) { 
-						return a.order_id-b.order_id;
+					arrBuffer.sort(function (a, b) {
+						return a.order_id - b.order_id;
 					});
 					// search for an id or text mismatch
 					var boolTextSearch = false;
@@ -470,7 +494,7 @@ $(function () {
 								// when theres no id in the buffer a text can be matched using a text search
 								if (strTextCrumb == objStack.nickname) { // text matches
 									boolTextSearch = true;
-									arrCrumbs[intItr] = objStack.stack_id*1; // set as new folder	
+									arrCrumbs[intItr] = objStack.stack_id * 1; // set as new folder	
 									arrCrumbsValues[intItr] = strTextCrumb;
 									break;
 								}
@@ -484,43 +508,43 @@ $(function () {
 						arrCrumbsValues[intItr] = strTextCrumb;
 						//displayNoStacks();
 					}
-				}			
+				}
 			}
 			// remove an items from the end that are no longer in the text
-			arrCrumbs.length = intItr; 
+			arrCrumbs.length = intItr;
 			arrCrumbsValues.length = intItr;
 
 			// find the item the caret is on an item
-			for (var intItr=0; intItr!=intVals; intItr++) {
+			for (var intItr = 0; intItr != intVals; intItr++) {
 				var strCurrentVal = arrVals[intItr],
-				intCurrentVal = strCurrentVal.length;
+					intCurrentVal = strCurrentVal.length;
 				if (
 					intCaretPos >= intValCharPast
-					&& intCaretPos <= intValCharPast+intCurrentVal
+					&& intCaretPos <= intValCharPast + intCurrentVal
 				) {
-					intCaretItem=intItr;
+					intCaretItem = intItr;
 					break;
 				}
-				intValCharPast+=intCurrentVal+1;
+				intValCharPast += intCurrentVal + 1;
 			}
 			if (!intCaretItem)
 				intCaretItem++;
 			intCaretItem--;
-			intSelectedCrumb = arrCrumbs[intCaretItem+1];
+			intSelectedCrumb = arrCrumbs[intCaretItem + 1];
 			intOpenMunuIndex = intCaretItem;
-			var boolLastCrumb = intCaretItem == intVals-2;
+			var boolLastCrumb = intCaretItem == intVals - 2;
 			var intCrumb = !intCaretItem ? 0 : arrCrumbs[intCaretItem];
 			if (intMenuItem != intCrumb || (intSelectedCrumb == null && !boolLastCrumb)) {
 				drawMenu(intCrumb);
 			}
 			if (
-				intMenuItem == null 
+				intMenuItem == null
 				|| boolLastCrumb
 				|| (
 					intSelectedCrumb == null
 				)
 			) {
-				narrowMenuList(arrCrumbsValues[intCaretItem+1]);
+				narrowMenuList(arrCrumbsValues[intCaretItem + 1]);
 			}
 			displayNoStacks();
 		}
@@ -531,15 +555,15 @@ $(function () {
 		}
 		function narrowMenuList(strSearch) {
 			var intSearch = !strSearch ? 0 : strSearch.length,
-			boolMenuChanged = false;
+				boolMenuChanged = false;
 			$saveLocationDrop.find(".save-location-drop-item").each(function () {
 				var $this = $(this),
-				strVal = $this.html(),
-				strSubVal = strVal.substr(0, intSearch);
-				if (( !intSearch || strSubVal.toLowerCase() === strSearch.toLowerCase() )) {
+					strVal = $this.html(),
+					strSubVal = strVal.substr(0, intSearch);
+				if ((!intSearch || strSubVal.toLowerCase() === strSearch.toLowerCase())) {
 					if ($this.hasClass('hidden')) {
 						$this.removeClass('hidden');
-						boolMenuChanged= true;
+						boolMenuChanged = true;
 					}
 				} else if (intSearch) {
 					if (!$this.hasClass('hidden')) {
@@ -565,19 +589,19 @@ $(function () {
 		function bindKeyboard() {
 			$input.bind('keydown', function (e) {
 				var
-				boolNavigateUp = e.key == 'ArrowUp',
-				boolNavigateDown = e.key == 'ArrowDown';
+					boolNavigateUp = e.key == 'ArrowUp',
+					boolNavigateDown = e.key == 'ArrowDown';
 				if (boolNavigateUp || boolNavigateDown) {
 					e.preventDefault();
 				}
 				if (boolNavigateUp) {
-					var 
-					$selected = $saveLocationDrop.find(".selected:not(.hidden)");
+					var
+						$selected = $saveLocationDrop.find(".selected:not(.hidden)");
 					if (!$selected.length) {
 						$selected = $saveLocationDrop.find(".save-location-drop-item:not(.hidden)").become(-1).addClass('selected');
 					} else {
 						var
-						$next = $selected.prev('.save-location-drop-item:not(.hidden)');
+							$next = $selected.prev('.save-location-drop-item:not(.hidden)');
 						$selected.removeClass('selected');
 						if ($next.length) {
 							$next.addClass('selected');
@@ -587,13 +611,13 @@ $(function () {
 					}
 					keepSelectionInView();
 				} else if (boolNavigateDown) {
-					var 
-					$selected = $saveLocationDrop.find(".selected:not(.hidden)");
+					var
+						$selected = $saveLocationDrop.find(".selected:not(.hidden)");
 					if (!$selected.length) {
 						$selected = $saveLocationDrop.find(".save-location-drop-item:not(.hidden)").become(0).addClass('selected');
 					} else {
 						var
-						$next = $selected.next('.save-location-drop-item:not(.hidden)');
+							$next = $selected.next('.save-location-drop-item:not(.hidden)');
 						$selected.removeClass('selected');
 						if ($next.length) {
 							$next.addClass('selected');
@@ -611,22 +635,22 @@ $(function () {
 			});
 		}
 		function keepSelectionInView() {
-			var 
-			$selected = $saveLocationDrop.find('.selected');
+			var
+				$selected = $saveLocationDrop.find('.selected');
 			if ($selected.length) {
 				intSelectedHeight = $selected.height(),
-				intDropTop = $saveLocationDrop[0].scrollTop,
-				intDropHeight = $saveLocationDrop.height(),
-				intDropBottom = intDropHeight+intDropTop,
-				intSelectedOffset = $selected.offset().top,
-				intSelectedTop = intSelectedOffset+intDropTop,
-				intSelectedBottom = intSelectedTop+intSelectedHeight;
+					intDropTop = $saveLocationDrop[0].scrollTop,
+					intDropHeight = $saveLocationDrop.height(),
+					intDropBottom = intDropHeight + intDropTop,
+					intSelectedOffset = $selected.offset().top,
+					intSelectedTop = intSelectedOffset + intDropTop,
+					intSelectedBottom = intSelectedTop + intSelectedHeight;
 				if (intSelectedBottom > intDropBottom) {
 					// too low
 					$saveLocationDrop[0].scrollTop = intSelectedTop;
 				} else if (intSelectedOffset < 0) {
 					// too low
-					$saveLocationDrop[0].scrollTop = Math.max(0,intSelectedTop-intDropHeight+intSelectedHeight);
+					$saveLocationDrop[0].scrollTop = Math.max(0, intSelectedTop - intDropHeight + intSelectedHeight);
 				}
 			}
 		}
@@ -636,9 +660,9 @@ $(function () {
 		}
 		function activateLoaf() {
 			if (!boolMenuDropped) {
-				var 
-				intCrumbs = arrCrumbs.length,
-				intParent = !arrCrumbs.length ? 0 : arrCrumbs[intCrumbs-1];
+				var
+					intCrumbs = arrCrumbs.length,
+					intParent = !arrCrumbs.length ? 0 : arrCrumbs[intCrumbs - 1];
 				dropMenu();
 				intOpenMunuIndex = 0;
 				drawMenu(intParent);

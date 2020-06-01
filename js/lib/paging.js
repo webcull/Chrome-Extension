@@ -1,12 +1,11 @@
 var pages = {};
-function paging(strPageName) {
+function paging(strPageName, objPageContext = null) {
 	$(".page").removeClass('active');
 	var $page = $("#" + strPageName);
-	console.log($page[0]);
 	$page.addClass('active');
 	$('html').attr('id', "html-" + strPageName);
 	if (pages[strPageName])
-		pages[strPageName]($page);
+		pages[strPageName]($page, objPageContext);
 	$.delay(1, function () {
 		$page.addClass('active-on');
 	});
