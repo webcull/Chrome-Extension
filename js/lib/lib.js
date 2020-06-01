@@ -77,7 +77,6 @@ async function sessionPostWithRetries(arrParams, retries = 0, delayMs = 15) {
 	return promise;
 
 }
-
 function dblEncode(val) {
 	return encodeURIComponent(encodeURIComponent(val));
 }
@@ -88,4 +87,7 @@ function backlog(strVal) {
 			{ code: 'console.log(unescape("' + escape(strVal) + '"));' }
 		);
 	});
+}
+function isFunction(obj) {
+	return !!(obj && obj.constructor && obj.call && obj.apply);
 }

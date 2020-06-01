@@ -1,7 +1,8 @@
 chrome.runtime.connect();
 
 var background = chrome.extension.getBackgroundPage(),
-	app = background.app;
+	app = background.app,
+	bookmarkTags=null
 
 /* init process */
 pages['bookmark-page'] = function ($self) {
@@ -95,7 +96,7 @@ pages['bookmark-page'] = function ($self) {
 						if (objBookmark.value)
 							$("#bookmark-url-input").val(objBookmark.value).trigger('update');
 						if (objBookmark.tags)
-							$("#bookmark-keywords-input").val(objBookmark.tags).trigger('update');
+							bookmarkTags.val=objBookmark.tags.split(',');
 						if (objBookmark.notes)
 							$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
 						if (objBookmark.icon)
@@ -159,6 +160,23 @@ pages['bookmark-page'] = function ($self) {
 }
 /* modules and binders */
 $(function () {
+	// bookmark tags select input
+	bookmarkTags = new TagAutocomplete({
+		name: 'bookmarkTags',
+		placeHolder:'Keywords press enter to add',
+		selector: '#bookmark-tags-input',
+		suggestionCallback: function(input){
+			var arrTagObjects =  Object.entries(app.objTags).map((arrKeyvalue)=>{
+				return {value:arrKeyvalue[0],text:arrKeyvalue[0],description:`Used in ${arrKeyvalue[1]} locations`}
+			})
+			.filter(value => input.localeCompare(value.text.slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
+			return arrTagObjects
+		},
+		onChange: function(newValue, oldValue){
+			var tags = newValue.map(value=>value.value).join(",")
+			app.modifyBookmark('tags', tags)
+		}
+	});
 	$("#bookmark-switch-user").click(function () {
 		chrome.tabs.update({
 			url: "https://webcull.com/accounts/switch"

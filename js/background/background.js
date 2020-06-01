@@ -20,7 +20,9 @@ app.getBookmark = function () {
 		objBookmark = app.data;
 	return objBookmark;
 };
-
+// Chrome fix part 3 
+app.stacks=[]
+app.objTags={}
 app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
 
@@ -29,12 +31,38 @@ function initalizeAccount() {
 		.then(function (arrData) {
 			if (arrData.no_user)
 				return;
-			app.data = arrData;
-			processURLs();
+			// The data property is currently being changed in bookmarks.js
+			// and the data structure of both responses differ so am 
+			// adding the 'stack' property of the response to the app 
+			// object instead of the data , this is to prevent break 
+			// in current implementaion 
+			// TODO change this  behaviour
+			app.stacks = arrData.stacks;
+			handleInitialData();
 		})
 		.catch(error => {
 			console.log(error)
 		})
+}
+function handleInitialData(){
+	for (var intParent in app.stacks) {
+		var intLen = app.stacks[intParent].length;
+		for (var intItr = 0; intItr < intLen; ++intItr) {
+			var objStack = app.stacks[intParent][intItr];
+			if (objStack.is_url == 1) {
+				app.urls[objStack.value] = 1;
+			}
+			if (objStack.tags && objStack.tags.length){
+				var arrTags = String(objStack.tags).split(',')
+				arrTags.forEach((tag)=>{
+					if (tag in app.objTags){
+						app.objTags[tag]+=1
+					}
+					app.objTags[tag] = 1
+				})
+			}
+		}
+	}
 }
 
 app.processURLs = processURLs;
@@ -49,7 +77,6 @@ function processURLs() {
 		}
 	}
 }
-
 
 app.alterIcon = alterIcon;
 function alterIcon(strUrl) {
@@ -71,6 +98,19 @@ function alterIcon(strUrl) {
 		});
 	}
 
+}
+app.modifyBookmark=modifyBookmark;
+function modifyBookmark(strName, strVal) {
+	var objBookmark = app.getBookmark(),
+	arrModify = {
+		proc: 'modify',
+		stack_id: objBookmark.stack_id,
+		name: strName,
+		value: dblEncode(strVal)
+	};
+	app.backgroundPost({ url: "https://webcull.com/api/modify", post: arrModify })
+		.then(response => console.log(response))
+		.catch(error => console.log(error))
 }
 
 // make sure it saves on disconnect

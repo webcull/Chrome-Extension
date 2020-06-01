@@ -301,3 +301,97 @@ transform-origin: 100% 100%;
 body:not(.is-loaded) .is-loaded-block {
 	display:none;
 }
+
+/**
+*  Tag input
+*/
+.tags-autocomplete-container {
+	display: inline-flex;
+	flex-wrap: wrap;
+	border: 1px solid #E6E6E6;
+	background-color: #FFFFFF;
+	border-radius: 5px;
+}
+
+.tags-autocomplete-container, .tags-autocomplete-container * {
+	box-sizing: border-box;
+}
+
+.tags-autocomplete-container .tags-autocomplete-input {
+	color: black;
+	font-size: 16px;
+	line-height: 32px;
+	margin: 4px 2px;
+	padding: 0px 8px;
+	width: 270px;
+	border-radius: 5px;
+	outline-color: #3b99fc;
+	
+}
+
+.tags-autocomplete-container .tags-autocomplete-input:empty::before {
+	content: attr(data-placeholder);
+	color: rgb(0,0,0,0.6);
+}
+
+/* selected tags*/
+.tags-autocomplete-container .tags-autocomplete-tags {
+	font-size: 12px;
+	line-height: 30px;
+	background-color: #E6E6E6;
+	margin: 4px 2px;
+	border-radius: 32px;
+	padding: 0px 8px;
+	pointer-events: none;
+}
+
+.tags-autocomplete-container .tags-autocomplete-tags:hover {
+	background-color: #EF9A9A;
+}
+
+.tags-autocomplete-container .tags-autocomplete-tags .tags-autocomplete-tags-delete {
+	cursor: pointer;
+	font-size: 24px;
+	line-height: 16px;
+	margin-left: 4px;
+	pointer-events: auto;
+	border-radius: 50%;
+	height: 24px;
+	width: 24px;
+	display: inline-block;
+	text-align: center;
+}
+
+.tags-autocomplete-container .tags-autocomplete-tags .tags-autocomplete-tags-delete:hover {
+	background-color: #e55858;
+}
+
+/* Tag suggestions*/
+.tags-autocomplete-container .tags-autocomplete-suggestions {
+	display: none;
+	width: 100%;
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+}
+
+.tags-autocomplete-container .tags-autocomplete-suggestions li {
+	width: 100%;
+	padding: 8px;
+	cursor: pointer;
+}
+
+.tags-autocomplete-container .tags-autocomplete-suggestions li.tags-autocomplete-suggestion-active {
+	color: #747474;
+	background-color: #fdfdfd;
+}
+
+.tags-autocomplete-container .tags-autocomplete-suggestions li.tags-autocomplete-suggestion-highlighted {
+	background-color: #95caec;
+}
+
+.tags-autocomplete-container .tags-autocomplete-suggestions li .tags-autocomplete-suggestion-description {
+	display:block;
+	font-size: 0.7em;
+	color: #808080;
+}
