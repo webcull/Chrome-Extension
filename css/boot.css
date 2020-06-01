@@ -20,6 +20,9 @@ body {
 .hidden {
 	display:none !important;
 }
+.show{
+	display: block;
+}
 .red {
 	color:red;
 }
@@ -149,4 +152,19 @@ body {
 	0%   { transform: rotate(-140deg); }
 	50%  { transform: rotate(-160deg); }
 	100% { transform: rotate(140deg); }
+}
+/* Scroll bar */
+::-webkit-scrollbar {
+	width: 8px;
+}
+::-webkit-scrollbar-track {
+	background: #f1f1f1; 
+	border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+	background: #888; 
+	border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+	background: #555; 
 }

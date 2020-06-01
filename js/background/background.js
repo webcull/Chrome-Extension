@@ -20,9 +20,8 @@ app.getBookmark = function () {
 		objBookmark = app.data;
 	return objBookmark;
 };
-// Chrome fix part 3 
-app.stacks=[]
 app.objTags={}
+app.accounts =[]
 app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
 
@@ -33,6 +32,15 @@ function initalizeAccount() {
 				return;
 			app.data = arrData;
 			processURLs();
+			// Task CHX-009
+			// Load accounts on load
+			sessionPostWithRetries({ url: "https://webcull.com/api/accounts", post: {}, }, 1)
+			.then((response)=>{
+				app.accounts = response.users
+			})
+			.catch((error)=>{
+				console.log(error)
+			})
 		})
 		.catch(error => {
 			console.log(error)
@@ -92,7 +100,7 @@ function modifyBookmark(strName, strVal) {
 		value: dblEncode(strVal)
 	};
 	app.backgroundPost({ url: "https://webcull.com/api/modify", post: arrModify })
-		.then(response => console.log(response))
+		.then(response => {})
 		.catch(error => console.log(error))
 }
 

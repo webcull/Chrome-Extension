@@ -2,8 +2,47 @@ chrome.runtime.connect();
 
 var background = chrome.extension.getBackgroundPage(),
 	app = background.app,
-	bookmarkTags=null
-
+	bookmarkTags=null,
+	switchAccounts = function(event){
+		event.preventDefault()
+		var email = event.target.dataset["email"]
+		if(!email)return false
+		app.backgroundPost({ url: "https://webcull.com/api/switch", post: {"email" :email} },1)
+			.then(function(response){
+				paging('bookmark-page');
+			})
+			.catch(function(error){
+				console.log(error)
+			})
+	},
+	loadAccounts = function(){
+		var $userAccountList = $("#accountsList"),
+			markUp = `<a class="userRow captureFocus" href="#">
+					<div class="userIcon" style="background-image: url(../images/account.png);"></div>
+					<div class="userText">
+						<div class="userName">@chris<div class="userLoading hidden">
+								<div class="radial-loader"></div>
+							</div>
+						</div>
+					</div>
+				</a>`;
+			arrUserAccounts = app.accounts.length? Array.from(app.accounts):[];
+		$userAccountList.html('')
+		if(!arrUserAccounts.length)return
+		for (let index = 0; index < arrUserAccounts.length; index++) {
+			if(app.data.user && (app.data.user.name === arrUserAccounts[index].name))continue;
+			var user = arrUserAccounts[index], $user = $(markUp), username = user.name , icon =user.icon , email= user.email;
+			if(icon)$user.find('.userIcon').css({'background-image': 'url("https://webcull.com/repository/images/users/avatar/' + icon + '")'});
+			$user.find('.userIcon').attr('data-email', email)
+			$user.find('.userName').html(username).attr('data-email', email)
+			$user.attr('data-email', email)
+			$user.attr('id' , email)
+			$user.appendTo($userAccountList)
+		}
+		$userAccountList.find('.userRow').each(function(){
+			$(this).click(switchAccounts , false)
+		})
+	}
 /* init process */
 pages['bookmark-page'] = function ($self) {
 	getTab()
@@ -124,6 +163,7 @@ pages['bookmark-page'] = function ($self) {
 							.removeClass('assets-loaded')
 							.removeClass('response-recieved')
 							.removeClass('loading-started')
+						loadAccounts();
 
 					}).catch(function (error) {
 						/* Fetch error */
@@ -148,6 +188,7 @@ pages['bookmark-page'] = function ($self) {
 								action: 'Try Again'
 
 							}
+							console.log(error)
 							return paging('network-page', context)
 						}
 					})
@@ -163,7 +204,7 @@ $(function () {
 	// bookmark tags select input
 	bookmarkTags = new TagAutocomplete({
 		name: 'bookmarkTags',
-		placeHolder:'Keywords press enter to add',
+		placeHolder:'Keywords, press enter to add',
 		selector: '#bookmark-tags-input',
 		suggestionCallback: function(input){
 			var arrTagObjects =  Object.entries(app.objTags).map((arrKeyvalue)=>{
@@ -177,22 +218,25 @@ $(function () {
 			app.modifyBookmark('tags', tags)
 		}
 	});
-	$("#bookmark-switch-user").click(function () {
+	$("#account-icon, #account-user").click(function(){
 		chrome.tabs.update({
-			url: "https://webcull.com/accounts/switch"
+			url: "https://webcull.com/bookmarks/"
 		});
 		window.close();
-	});
+	})
+	// logout handler
 	$("#bookmark-logout").click(function () {
 		chrome.tabs.update({
 			url: "https://webcull.com/logout/index/acc/" + app.data.user.hash + "/"
 		});
 		window.close();
 	});
+
 	/* auto update textbox binder */
 	$(".initStackUpdate").each(function () {
 		$(this).stackUpdate();
 	});
+
 	/* bookmark location breadcrumbs binder */
 	(function () {
 		// init breadcrumbs
@@ -702,5 +746,35 @@ $(function () {
 		$("#save-location-input").on("blur", function () {
 			refDeactivationTimeout = $.delay(50, deactivateLoaf);
 		});
+	})();
+	
+	/*  Account switching */
+	(function(){
+		var $account_switcher = $("#account-switcher"),
+			$bookmarkMainView = $("#bookmark-main-view"),
+			$switchBtn = $("#bookmark-switch-user"),
+			$switchBackBtn = $("#bookmark-switch-back");
+		function showAccountSwitcher(e){
+			$bookmarkMainView.addClass('animate-opacity').addClass("hidden")
+			$account_switcher.removeClass('hidden').addClass("animate-left")
+			$switchBtn.removeClass("show").addClass("hidden")
+			$switchBackBtn.removeClass("hidden").addClass("show")
+		}
+		function hideAccountSwitcher(e){
+			$account_switcher.addClass("animate-left").addClass("hidden")
+			$bookmarkMainView.removeClass('hidden').addClass("animate-right")
+			$switchBtn.removeClass("hidden").addClass("show")
+			$switchBackBtn.removeClass("show").addClass("hidden")
+
+		}
+		$("#bookmark-switch-user").click(function (e) {
+			showAccountSwitcher(e)
+		});
+		$("#bookmark-switch-back").click(function (e) {
+			hideAccountSwitcher(e)
+		});
+		$(".userRow").each(function(el){
+			console.log(this)
+		})
 	})();
 });
