@@ -31,24 +31,20 @@ function initalizeAccount() {
 		.then(function (arrData) {
 			if (arrData.no_user)
 				return;
-			// The data property is currently being changed in bookmarks.js
-			// and the data structure of both responses differ so am 
-			// adding the 'stack' property of the response to the app 
-			// object instead of the data , this is to prevent break 
-			// in current implementaion 
-			// TODO change this  behaviour
-			app.stacks = arrData.stacks;
-			handleInitialData();
+			app.data = arrData;
+			processURLs();
 		})
 		.catch(error => {
 			console.log(error)
 		})
 }
-function handleInitialData(){
-	for (var intParent in app.stacks) {
-		var intLen = app.stacks[intParent].length;
+
+app.processURLs = processURLs;
+function processURLs() {
+	for (var intParent in app.data.stacks) {
+		var intLen = app.data.stacks[intParent].length;
 		for (var intItr = 0; intItr < intLen; ++intItr) {
-			var objStack = app.stacks[intParent][intItr];
+			var objStack = app.data.stacks[intParent][intItr];
 			if (objStack.is_url == 1) {
 				app.urls[objStack.value] = 1;
 			}
@@ -60,19 +56,6 @@ function handleInitialData(){
 					}
 					app.objTags[tag] = 1
 				})
-			}
-		}
-	}
-}
-
-app.processURLs = processURLs;
-function processURLs() {
-	for (var intParent in app.data.stacks) {
-		var intLen = app.data.stacks[intParent].length;
-		for (var intItr = 0; intItr < intLen; ++intItr) {
-			var objStack = app.data.stacks[intParent][intItr];
-			if (objStack.is_url == 1) {
-				app.urls[objStack.value] = 1;
 			}
 		}
 	}
