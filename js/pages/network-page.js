@@ -5,10 +5,7 @@ var NETWORK_DEFAULTS = {
         paging('bookmark-page')
     },
     action: 'RETRY'
-},
-    isFunction = function (obj) {
-        return !!(obj && obj.constructor && obj.call && obj.apply);
-    };
+};
 pages['network-page'] = function ($self, context) {
     var text = context && context.action ? context.action : NETWORK_DEFAULTS.action,
         callback = context && context.callback ? isFunction(context.callback) ? context.callback : NETWORK_DEFAULTS.callback : NETWORK_DEFAULTS.callback,

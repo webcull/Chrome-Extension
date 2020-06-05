@@ -1,6 +1,5 @@
 var background = chrome.extension.getBackgroundPage(),
 	app = background.app;
-
 $(function () {
 	$(".placeholder").click(function (e) {
 		if (!$(e.target).hasClass('placeholder-input'))
@@ -42,10 +41,8 @@ $(function () {
 			strEvents = 'keyup.stackUpdate click.stackUpdate blur.stackUpdate change.stackUpdate',
 			refUpdateDelay,
 			strCurrentValue = $this.val();
-		if ($this.hasClass('stackUpdate'))
-			return $this;
-		$this
-			.addClass('stackUpdate')
+		if ($this.hasClass('stackUpdate'))return $this;
+		$this.addClass('stackUpdate')
 			.bind(strEvents, function () {
 				var strName = $this.attr('name'),
 					strVal = $this.val();
@@ -68,31 +65,16 @@ $(function () {
 			});
 		function updateCall(that) {
 			var $this = $(that);
-			if ($this.hasClass('error'))
-				return;
+			if ($this.hasClass('error'))return;
 			var strVal = $this.val();
-			if (strVal == strCurrentValue)
-				return;
+			if (strVal == strCurrentValue)return;
 			// make sure it still exists
 			strCurrentValue = strVal;
 			var strName = $this.attr('name');
 			if (!strName || !strName.length) {
 				return alert('Error missing name parameter for update call');
 			}
-			var objBookmark = app.getBookmark(),
-				arrModify = {
-				proc: 'modify',
-				stack_id: objBookmark.stack_id,
-				name: strName,
-				value: dblEncode(strVal)
-			};
-			app.backgroundPost({
-				url: "https://webcull.com/api/modify",
-				post: arrModify,
-				success: function () {
-
-				}
-			});
+			app.modifyBookmark(strName , strVal)
 		}
 		return $this;
 	});

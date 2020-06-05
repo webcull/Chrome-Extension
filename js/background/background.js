@@ -20,7 +20,8 @@ app.getBookmark = function () {
 		objBookmark = app.data;
 	return objBookmark;
 };
-
+app.objTags={}
+app.accounts =[]
 app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
 
@@ -31,6 +32,15 @@ function initalizeAccount() {
 				return;
 			app.data = arrData;
 			processURLs();
+			// Task CHX-009
+			// Load accounts on load
+			sessionPostWithRetries({ url: "https://webcull.com/api/accounts", post: {}, }, 1)
+			.then((response)=>{
+				app.accounts = response.users
+			})
+			.catch((error)=>{
+				console.log(error)
+			})
 		})
 		.catch(error => {
 			console.log(error)
@@ -46,10 +56,18 @@ function processURLs() {
 			if (objStack.is_url == 1) {
 				app.urls[objStack.value] = 1;
 			}
+			if (objStack.tags && objStack.tags.length){
+				var arrTags = String(objStack.tags).split(',')
+				arrTags.forEach((tag)=>{
+					if (tag in app.objTags){
+						app.objTags[tag]+=1
+					}
+					app.objTags[tag] = 1
+				})
+			}
 		}
 	}
 }
-
 
 app.alterIcon = alterIcon;
 function alterIcon(strUrl) {
@@ -71,6 +89,19 @@ function alterIcon(strUrl) {
 		});
 	}
 
+}
+app.modifyBookmark=modifyBookmark;
+function modifyBookmark(strName, strVal) {
+	var objBookmark = app.getBookmark(),
+	arrModify = {
+		proc: 'modify',
+		stack_id: objBookmark.stack_id,
+		name: strName,
+		value: dblEncode(strVal)
+	};
+	app.backgroundPost({ url: "https://webcull.com/api/modify", post: arrModify })
+		.then(response => {})
+		.catch(error => console.log(error))
 }
 
 // make sure it saves on disconnect
