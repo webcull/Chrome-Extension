@@ -37,6 +37,7 @@
 			</div>
 		</div>
 		<div id="account" class="is-loaded">
+			<div id="webcull-action"></div>
 			<div id="account-icon"></div>
 			<div id="account-options">
 				<div id="account-user"></div>
@@ -48,6 +49,7 @@
 			</div>
 		</div>
 		<div id="account-switcher" class="hidden">
+			<div class="header">Quick switch account</div>
 			<div id="accountsList">
 			</div>
 		</div>
@@ -82,14 +84,14 @@
 					<input class='placeholder-input' type="text" value="/" id="save-location-input">
 				</div>
 			</div>
+			<div id="save-tags">
+				<div class='is-loaded-block placeholder'>
+					<div class='placeholder-label'>Tags</div>
+					<input class='placeholder-input initStackUpdate' autocomplete="off" id="bookmark-tags-input" name="tags" type="text">
+					<div id='save-tags-drop' class="hidden"></div>
+				</div>
+			</div>
 			<div id="bookmark-extra-details" class='is-loaded-block'>
-				<div class='placeholder'>
-					<div id="bookmark-tags-input" name="tags" class=""></div>
-				</div>
-				<div class='placeholder'>
-					<div class='placeholder-label'>Keywords</div>
-					<input class='placeholder-input initStackUpdate' id="bookmark-keywords-input" name="tags" type="text">
-				</div>
 				<div class='placeholder textarea'>
 					<div class='placeholder-label'>Notes</div>
 					<textarea id="bookmark-notes-input" class='placeholder-input initStackUpdate' name="notes"

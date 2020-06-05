@@ -2,20 +2,19 @@ chrome.runtime.connect();
 
 var background = chrome.extension.getBackgroundPage(),
 	app = background.app,
-	bookmarkTags=null,
-	switchAccounts = function(event){
+	switchAccounts = function (event) {
 		event.preventDefault()
 		var email = event.target.dataset["email"]
-		if(!email)return false
-		app.backgroundPost({ url: "https://webcull.com/api/switch", post: {"email" :email} },1)
-			.then(function(response){
+		if (!email) return false
+		app.backgroundPost({ url: "https://webcull.com/api/switch", post: { "email": email } }, 1)
+			.then(function (response) {
 				paging('bookmark-page');
 			})
-			.catch(function(error){
+			.catch(function (error) {
 				console.log(error)
 			})
 	},
-	loadAccounts = function(){
+	loadAccounts = function () {
 		var $userAccountList = $("#accountsList"),
 			markUp = `<a class="userRow captureFocus" href="#">
 					<div class="userIcon" style="background-image: url(../images/account.png);"></div>
@@ -26,21 +25,21 @@ var background = chrome.extension.getBackgroundPage(),
 						</div>
 					</div>
 				</a>`;
-			arrUserAccounts = app.accounts.length? Array.from(app.accounts):[];
+		arrUserAccounts = app.accounts.length ? Array.from(app.accounts) : [];
 		$userAccountList.html('')
-		if(!arrUserAccounts.length)return
+		if (!arrUserAccounts.length) return
 		for (let index = 0; index < arrUserAccounts.length; index++) {
-			if(app.data.user && (app.data.user.name === arrUserAccounts[index].name))continue;
-			var user = arrUserAccounts[index], $user = $(markUp), username = user.name , icon =user.icon , email= user.email;
-			if(icon)$user.find('.userIcon').css({'background-image': 'url("https://webcull.com/repository/images/users/avatar/' + icon + '")'});
+			if (app.data.user && (app.data.user.name === arrUserAccounts[index].name)) continue;
+			var user = arrUserAccounts[index], $user = $(markUp), username = user.name, icon = user.icon, email = user.email;
+			if (icon) $user.find('.userIcon').css({ 'background-image': 'url("https://webcull.com/repository/images/users/avatar/' + icon + '")' });
 			$user.find('.userIcon').attr('data-email', email)
 			$user.find('.userName').html(username).attr('data-email', email)
 			$user.attr('data-email', email)
-			$user.attr('id' , email)
+			$user.attr('id', email)
 			$user.appendTo($userAccountList)
 		}
-		$userAccountList.find('.userRow').each(function(){
-			$(this).click(switchAccounts , false)
+		$userAccountList.find('.userRow').each(function () {
+			$(this).click(switchAccounts, false)
 		})
 	}
 /* init process */
@@ -135,7 +134,8 @@ pages['bookmark-page'] = function ($self) {
 						if (objBookmark.value)
 							$("#bookmark-url-input").val(objBookmark.value).trigger('update');
 						if (objBookmark.tags)
-							bookmarkTags.val=objBookmark.tags.split(',');
+							//bookmarkTags.val=objBookmark.tags.split(',');
+							$("#bookmark-tags-input").val(objBookmark.tags).trigger('update');
 						if (objBookmark.notes)
 							$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
 						if (objBookmark.icon)
@@ -163,8 +163,13 @@ pages['bookmark-page'] = function ($self) {
 							.removeClass('assets-loaded')
 							.removeClass('response-recieved')
 							.removeClass('loading-started')
-						loadAccounts();
-
+						$.delay(50, function () {
+							sessionPostWithRetries({ url: "https://webcull.com/api/accounts", post: {}, }, 1)
+								.then((response) => {
+									app.accounts = response.users
+								})
+							loadAccounts();
+						})
 					}).catch(function (error) {
 						/* Fetch error */
 						// Task: CHX-007
@@ -201,24 +206,47 @@ pages['bookmark-page'] = function ($self) {
 }
 /* modules and binders */
 $(function () {
-	// bookmark tags select input
-	bookmarkTags = new TagAutocomplete({
-		name: 'bookmarkTags',
-		placeHolder:'Keywords, press enter to add',
-		selector: '#bookmark-tags-input',
-		suggestionCallback: function(input){
-			var arrTagObjects =  Object.entries(app.objTags).map((arrKeyvalue)=>{
-				return {value:arrKeyvalue[0],text:arrKeyvalue[0],description:`Used in ${arrKeyvalue[1]} locations`}
-			})
-			.filter(value => input.localeCompare(value.text.slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
-			return arrTagObjects
-		},
-		onChange: function(newValue, oldValue){
-			var tags = newValue.map(value=>value.value).join(",")
-			app.modifyBookmark('tags', tags)
+	// Tags input
+	(function () {
+		var $tagDrop = $("#save-tags-drop"),
+			$tagInput = $("#bookmark-tags-input"),
+			strItemMarkup = "<div class='save-location-drop-item'></div>",
+			minCharactersForSuggestion = 1;
+		function showTagSuggestions() {
+			$tagDrop.removeClass('hidden').addClass('show')
+
 		}
-	});
-	$("#account-icon, #account-user").click(function(){
+		function hideTagSuggestions() {
+			$tagDrop.addClass('hidden').removeClass('show')
+
+		}
+		function clearSuggestions() {
+			$tagDrop.html('')
+		}
+		function addSuggestion(suggestion) {
+			$item = $(strItemMarkup).text(suggestion.value)
+			$tagDrop.append($item)
+			showTagSuggestions()
+		}
+		$tagInput.on('keyup', function (event) {
+			hideTagSuggestions();
+			clearSuggestions();
+			var input = $tagInput.val() || '';
+			if (!input.length) return true
+			input = input.split(',')[input.split(",").length - 1].trim()
+			if (input.length >= minCharactersForSuggestion) {
+				var arrTagObjects = Object.entries(app.objTags).map((arrKeyvalue) => {
+					return { value: arrKeyvalue[0], text: arrKeyvalue[0], description: `Used in ${arrKeyvalue[1]} locations` }
+				}).filter(value => input.localeCompare(value.text.slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
+				arrTagObjects.forEach(function (suggestion) { addSuggestion(suggestion); });
+			}
+		})
+		$tagInput.on('blur', function (event) {
+			hideTagSuggestions()
+			clearSuggestions();
+		})
+	})();
+	$("#webcull-action").click(function () {
 		chrome.tabs.update({
 			url: "https://webcull.com/bookmarks/"
 		});
@@ -747,20 +775,20 @@ $(function () {
 			refDeactivationTimeout = $.delay(50, deactivateLoaf);
 		});
 	})();
-	
+
 	/*  Account switching */
-	(function(){
+	(function () {
 		var $account_switcher = $("#account-switcher"),
 			$bookmarkMainView = $("#bookmark-main-view"),
 			$switchBtn = $("#bookmark-switch-user"),
 			$switchBackBtn = $("#bookmark-switch-back");
-		function showAccountSwitcher(e){
+		function showAccountSwitcher(e) {
 			$bookmarkMainView.addClass('animate-opacity').addClass("hidden")
 			$account_switcher.removeClass('hidden').addClass("animate-left")
 			$switchBtn.removeClass("show").addClass("hidden")
 			$switchBackBtn.removeClass("hidden").addClass("show")
 		}
-		function hideAccountSwitcher(e){
+		function hideAccountSwitcher(e) {
 			$account_switcher.addClass("animate-left").addClass("hidden")
 			$bookmarkMainView.removeClass('hidden').addClass("animate-right")
 			$switchBtn.removeClass("hidden").addClass("show")
@@ -773,8 +801,5 @@ $(function () {
 		$("#bookmark-switch-back").click(function (e) {
 			hideAccountSwitcher(e)
 		});
-		$(".userRow").each(function(el){
-			console.log(this)
-		})
 	})();
 });
