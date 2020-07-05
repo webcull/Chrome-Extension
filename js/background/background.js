@@ -107,7 +107,7 @@ function modifyBookmark(strName, strVal) {
 // make sure it saves on disconnect
 chrome.runtime.onConnect.addListener(function (externalPort) {
 	externalPort.onDisconnect.addListener(function () {
-		app.saveCrumbs();
+		app.saveCrumbs && app.saveCrumbs();
 	});
 });
 

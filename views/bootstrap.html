@@ -11,6 +11,8 @@
 	<script src="../js/pages/bookmark-page.js"></script>
 	<script src="../js/pages/network-page.js"></script>
 	<script src="../js/bootstrap.js"></script>
+	<script src="../autocomplete.js"></script>
+
 	<link rel="stylesheet" href="../css/boot.css" type="text/css" />
 	<link rel="stylesheet" href="../css/loading-page.css" type="text/css" />
 	<link rel="stylesheet" href="../css/accounts-page.css" type="text/css" />
@@ -43,7 +45,8 @@
 				<div id="account-user"></div>
 				<div id="account-buttons">
 					<a href="#" class="account-button switch-back hidden" id='bookmark-switch-back' title="Back"></a>
-					<a href="#" class="account-button switch-user show" id='bookmark-switch-user' title="Switch user"></a>
+					<a href="#" class="account-button switch-user show" id='bookmark-switch-user'
+						title="Switch user"></a>
 					<a href="#" class="account-button logout" id='bookmark-logout' title="Logout"></a>
 				</div>
 			</div>
@@ -71,7 +74,8 @@
 					</div>
 					<div class='placeholder'>
 						<div class='placeholder-label'>Website URL</div>
-						<input class='placeholder-input initStackUpdate' id="bookmark-url-input" name="value" type="text">
+						<input class='placeholder-input initStackUpdate' id="bookmark-url-input" name="value"
+							type="text">
 					</div>
 					<!--input placeholder="Title" id="bookmark-nickname" class="details-input" type="text"><br>
 					<input placeholder="URL" id="bookmark-value" class="details-input" type="text"-->
@@ -79,16 +83,15 @@
 			</div>
 			<div id="bookmark-status" class='is-loaded-block'></div>
 			<div id="save-location">
-				<div class='is-loaded-block placeholder'>
+				<div class='is-loaded-block placeholder' id="locations">
 					<div class='placeholder-label'>Bookmark Location</div>
 					<input class='placeholder-input' type="text" value="/" id="save-location-input">
 				</div>
 			</div>
 			<div id="save-tags">
-				<div class='is-loaded-block placeholder'>
+				<div class='is-loaded-block placeholder' id="tags">
 					<div class='placeholder-label'>Tags</div>
 					<input class='placeholder-input initStackUpdate' autocomplete="off" id="bookmark-tags-input" name="tags" type="text">
-					<div id='save-tags-drop' class="hidden"></div>
 				</div>
 			</div>
 			<div id="bookmark-extra-details" class='is-loaded-block'>

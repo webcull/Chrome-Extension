@@ -473,3 +473,43 @@ a * {
 	-ms-transform: translateZ(0);
 	transform: translateZ(0);
 }
+
+
+.autocomplete-container .token-autocomplete-suggestions {
+	display: none;
+	width: 100%;
+	list-style-type: none;
+	padding: 0px;
+	margin: 0px;
+
+
+	position:absolute;
+	top:38px;
+	left:10px;
+	width:220px;
+	background-color:#eee;
+	border-radius: 0 0 5px 5px;
+	border:2px solid #3b99fc;
+	border-top:1px solid #ccc;
+	max-height: 190px;
+	overflow-y:auto;
+	z-index:22;
+}
+
+.autocomplete-container .token-autocomplete-suggestions li {
+	width: 100%;
+	padding: 8px;
+	cursor: pointer;
+}
+.autocomplete-container .token-autocomplete-suggestions li:hover {
+	background-color:#ddd;
+
+}
+.autocomplete-container .token-autocomplete-suggestions li.token-autocomplete-suggestion-active {
+	color: #747474;
+	background-color: #fdfdfd;
+}
+
+.autocomplete-container .token-autocomplete-suggestions li.token-autocomplete-suggestion-highlighted {
+	background-color: #95caec;
+}
