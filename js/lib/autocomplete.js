@@ -25,14 +25,14 @@ var InputAutocomplete = /** @class */ (function () {
 
         this.autocomplete = new InputAutocomplete.Autocomplete(this);
         var me = this;
-        this.textInput.addEventListener('keydown', function (event) {
+        this.textInput.addEventListener('keyup', function (event) {
             var _a, _b;
 
             if (event.which == me.KEY_ENTER || event.keyCode == me.KEY_ENTER) {
                 var highlightedSuggestion = me.autocomplete.suggestions.querySelector('.token-autocomplete-suggestion-highlighted');
                 if (highlightedSuggestion !== null) {
                     event.preventDefault();
-                    var value = highlightedSuggestion.getAttribute('data-value')
+                    var value = highlightedSuggestion.suggestion || highlightedSuggestion.getAttribute('data-value')
                     me.onSelect && me.onSelect(value)
                     me.autocomplete.clearSuggestions();
                     me.autocomplete.hideSuggestions();
@@ -41,7 +41,7 @@ var InputAutocomplete = /** @class */ (function () {
             }
             else if (
                 (event.which == me.KEY_UP || event.keyCode == me.KEY_UP) &&
-                me.autocomplete.suggestions.childNodes.length > 0
+                me.autocomplete.suggestions.childNodes.length > 1
             ) {
                 var highlightedSuggestion = me.autocomplete.suggestions.querySelector('.token-autocomplete-suggestion-highlighted');
                 var aboveSuggestion = (_a = highlightedSuggestion) === null || _a === void 0 ? void 0 : _a.previousSibling;
@@ -53,7 +53,7 @@ var InputAutocomplete = /** @class */ (function () {
             }
             else if (
                 (event.which == me.KEY_DOWN || event.keyCode == me.KEY_DOWN) &&
-                me.autocomplete.suggestions.childNodes.length > 0
+                me.autocomplete.suggestions.childNodes.length > 1
             ) {
                 var highlightedSuggestion = me.autocomplete.suggestions.querySelector('.token-autocomplete-suggestion-highlighted');
                 var belowSuggestion = (_b = highlightedSuggestion) === null || _b === void 0 ? void 0 : _b.nextSibling;
@@ -65,36 +65,57 @@ var InputAutocomplete = /** @class */ (function () {
                 return false;
             }
             else {
-                me.autocomplete.hideSuggestions();
-                me.autocomplete.clearSuggestions();
-                var value = me.textInput.value || '';
-                if (value.length >= me.options.minCharactersForSuggestion) {
-                    if (me.suggestionCallback) {
-                        var suggestions = me.suggestionCallback(value)
-                        if (Array.isArray(suggestions)) {
-                            suggestions.forEach(function (suggestion) {
-                                me.autocomplete.addSuggestion(suggestion);
-                            });
-                            if (me.autocomplete.suggestions.childNodes.length > 0) {
-                                me.autocomplete.highlightSuggestionAtPosition(0);
-                            } else if (me.options.noMatchesText) {
-                                me.autocomplete.addSuggestion({
-                                    value: '_no_match_',
-                                    text: me.options.noMatchesText,
-                                    description: null
-                                });
-                            }
-                        }
-                    }
-                }
-                return
+                me.show()
+                return true
             }
-            me.autocomplete.hideSuggestions();
-            me.autocomplete.clearSuggestions();
         });
-
-        this.container.inputAutocomplete = this;
+        this.textInput.inputAutocomplete = this;
     }
+    InputAutocomplete.prototype.show = function () {
+        this.autocomplete.hideSuggestions();
+        this.autocomplete.clearSuggestions();
+        var value = this.textInput.value || '';
+        if (value.length >= this.options.minCharactersForSuggestion) {
+            if (this.suggestionCallback) {
+                var suggestions = this.suggestionCallback(value);
+                if (Array.isArray(suggestions)) {
+                    suggestions.forEach(suggestion => this.autocomplete.addSuggestion(suggestion));
+                    if (this.autocomplete.suggestions.childNodes.length > 0) {
+                        this.autocomplete.highlightSuggestionAtPosition(0);
+                    } else if (this.options.noMatchesText) {
+                        this.showNone()
+                    }
+                } else if (this.options.noMatchesText) {
+                    this.showNone()
+                }
+            }
+        }
+    }
+    InputAutocomplete.prototype.display = function (suggestions) {
+        this.autocomplete.hideSuggestions();
+        this.autocomplete.clearSuggestions();
+        if (Array.isArray(suggestions)) {
+            suggestions.forEach(suggestion => this.autocomplete.addSuggestion(suggestion));
+            if (this.autocomplete.suggestions.childNodes.length > 0) {
+                this.autocomplete.highlightSuggestionAtPosition(0);
+            } else if (this.options.noMatchesText) {
+                this.showNone()
+            }
+        } else if (this.options.noMatchesText) {
+            this.showNone()
+        }
+    };
+    InputAutocomplete.prototype.showNone = function () {
+        this.autocomplete.addSuggestion({
+            value: '_no_match_',
+            text: this.options.noMatchesText,
+            description: null
+        });
+    };
+    InputAutocomplete.prototype.hide = function () {
+        this.autocomplete.clearSuggestions();
+        this.autocomplete.hideSuggestions();
+    };
     var _a;
     InputAutocomplete.Autocomplete = (_a = /** @class */ (function () {
         function Autocomplete(parent) {
@@ -136,10 +157,13 @@ var InputAutocomplete = /** @class */ (function () {
             var element = this.renderer(suggestion),
                 me = this;
             element.setAttribute('data-value', suggestion.value);
-            element.addEventListener('click', function (_event) {
-                var value = _event.target.getAttribute('data-value')
-                console.log(value)
-                me.parent.onSelect && me.parent.onSelect(value);
+            element.suggestion = suggestion
+            element.addEventListener('click', function (event) {
+                if (suggestion.text == me.parent.options.noMatchesText) {
+                    return true;
+                }
+                me.parent.onSelect && me.parent.onSelect(suggestion);
+                event.stopImmediatePropagation();
                 me.clearSuggestions();
                 me.hideSuggestions();
             });
@@ -153,7 +177,7 @@ var InputAutocomplete = /** @class */ (function () {
     }()),
         _a.defaultRenderer = function (suggestion) {
             var option = document.createElement('li');
-            option.textContent = suggestion.text;
+            option.innerHTML = suggestion.text;
             return option;
         },
         _a);

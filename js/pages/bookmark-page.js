@@ -135,7 +135,7 @@ pages['bookmark-page'] = function ($self) {
 							$("#bookmark-url-input").val(objBookmark.value).trigger('update');
 						if (objBookmark.tags)
 							//bookmarkTags.val=objBookmark.tags.split(',');
-							$("#bookmark-tags-input").val(objBookmark.tags).trigger('update');
+							$("#bookmark-tags-input").val(String(objBookmark.tags).replace(/\s+/g, ',')).trigger('update');
 						if (objBookmark.notes)
 							$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
 						if (objBookmark.icon)
@@ -207,39 +207,16 @@ pages['bookmark-page'] = function ($self) {
 
 /* modules and binders */
 $(function () {
-	// Tags input
-	let Tags = new InputAutocomplete({
-		selector: '#tags',
-		minCharactersForSuggestion: 1,
-		suggestionCallback: function (input) {
-			input = input.split(',')[input.split(",").length - 1].trim()
-			var arrTagObjects = Object.entries(app.objTags)
-				.map((arrKeyValue) => {
-					return { value: arrKeyValue[0], text: arrKeyValue[0], description: `Used in ${arrKeyValue[1]} locations` }
-				})
-				.filter(value => input.localeCompare(value.text.slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
-			return arrTagObjects
-		},
-		onSelect: function (selected) {
-			console.log(selected)
-		}
-	})
-	window.Tags = Tags
-
-	// Location input
-	var $input = $("#save-location-input"),
+	var $locationInput = $("#save-location-input"),
+		$tagsInput = $("#bookmark-tags-input"),
 		arrCrumbs = [0],
 		arrCrumbsValues = [""],
 		arrLastCrumbs,
 		arrLastCrumbsValues,
-		boolMenuDropped = false,
-		intOpenMunuIndex = 0,
-		$saveLocationDrop = $("<div id='save-location-drop'></div>"),
-		intMenuItem = 0,
 		intSelectedCrumb = 0,
-		$empty = null,
+		intOpenMenuIndex = 0,
 		arrTempStacks = {};
-	$input.trigger('update')
+	$locationInput.trigger('update')
 	app.loadedPromises.push(function () {
 		// work backwards to build the bread crumbs
 		var arrCrumbsFound = [],
@@ -268,37 +245,330 @@ $(function () {
 				};
 				arrCrumbs.unshift(0);
 				arrCrumbsValues.unshift("");
-				$("#save-location-input").val(arrCrumbsValues.join("/"));
-				console.log(arrCrumbs)
+				$("#save-location-input").val(arrCrumbsValues.join("/")).trigger('update');
 			}
 		}
 		arrLastCrumbs = arrCrumbs.slice(0);
 		arrLastCrumbsValues = arrCrumbsValues.slice(0);
 	});
-	let Locations = new InputAutocomplete({
-		selector: '#locations',
+	$locationInput.on('input change update', processLocationText)
+	$locationInput.on('blur', saveChanges)
+	var hideTimeout 
+	$locationInput.on('change', function () {
+		var intStackId = processLocationText(), me = this, hide = () => setTimeout(() => me.inputAutocomplete.hide(), 500);
+		if (intStackId) {
+			var arrStacks = loadStacks(intStackId)
+			if (arrStacks.length) {
+				if(hideTimeout)clearTimeout(hideTimeout);
+				setTimeout(() => me.inputAutocomplete.display(arrStacks), 100)
+				return true;
+			} else {
+				hideTimeout=hide()
+				return true
+			}
+		} else {
+			hideTimeout=hide()
+			return true
+		};
+	})
+	var tags = new InputAutocomplete({
+		selector: '#tags',
 		minCharactersForSuggestion: 1,
 		suggestionCallback: function (input) {
-			console.log(input)
-			var intCrumbs = arrCrumbs.length,
-				intParent = !arrCrumbs.length ? 0 : arrCrumbs[intCrumbs - 1],
-				arrStacks = app.data.stacks[intParent];
-			console.log(arrCrumbs, arrStacks)
-			if (arrStacks) {
-				var arrBuffer = arrStacks.filter(stack => stack.is_url)
-					.sort((a, b) => { return a.order_id - b.order_id })
-				console.log(arrBuffer)
-				return []
+			var arrTags = String(input).replace(/\s+/g, ',').split(',').filter(tag => tag.length > 0),
+				input,
+				arrTagObjects = [];
+			if (!arrTags.length) return arrTagObjects;
+			input = arrTags[arrTags.length - 1];
+			arrTagObjects = Object.entries(app.objTags)
+				.filter(arrKeyValue => arrTags.indexOf(arrKeyValue[0]) === -1)
+				.filter(arrKeyValue => input.localeCompare(arrKeyValue[0].slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
+				.map((arrKeyValue) => {
+					return {
+						value: arrKeyValue[0],
+						text: arrKeyValue[0],
+						description: `Used in ${arrKeyValue[1]} locations`
+					}
+				})
+			return arrTagObjects
+		},
+		onSelect: function (selected) {
+			var arrTags = String($tagsInput.val())
+				.replace(/\s+/g, ',')
+				.split(',')
+				.filter(tag => tag.length > 0)
+			arrTags.pop()
+			arrTags.push(selected.text)
+			$tagsInput.val(arrTags.join(",")).trigger('update');
+		}
+	});
+	var locations = new InputAutocomplete({
+		selector: '#save-location',
+		minCharactersForSuggestion: 2,
+		suggestionCallback: function (input) {
+			c = processLocationText()
+			if (isNaN(c)) {
+				this.options.noMatchesText = displayNoStacks();
+				return
+			}
+			var arrStacks = loadStacks(c)
+			if (arrStacks.length) {
+				return arrStacks
 			} else {
-				return []
+				this.options.noMatchesText = displayNoStacks();
 			}
 		},
 		onSelect: function (selected) {
-			console.log(selected)
+			var strVal = $locationInput.val(),
+				arrVal = strVal.split(/\//);
+			arrCrumbs[intOpenMenuIndex + 1] = selected.value * 1;
+			arrCrumbsValues[intOpenMenuIndex + 1] = selected.text;
+			arrVal[intOpenMenuIndex + 1] = selected.text;
+			if (intOpenMenuIndex != arrCrumbs.length - 2) {
+				arrVal.length = intOpenMenuIndex + 2;
+				arrCrumbs.length = intOpenMenuIndex + 2;
+				arrCrumbsValues.length = intOpenMenuIndex + 2;
+			}
+			arrVal.push("");
+			$locationInput.val(arrVal.join("/")).trigger('change');
 		}
 	})
-	window.Locations = Locations
+	function processLocationText() {
+		var strVal = $locationInput.val(),
+			arrVal = strVal.split(/\//),
+			intVal = arrVal.length,
+			intCaretPos = $locationInput[0].selectionStart,
+			intCaretItem,
+			intMenuItem,
+			intValCharPast = 0;
 
+		if (arrVal.length < 2 || arrVal[0] != "") {
+			$locationInput.val("/" + strVal);
+			return processLocationText();
+		}
+		if (strVal.match(/\/\//)) {
+			$locationInput.val(strVal.replace(/\/\//, '/'));
+			return processLocationText();
+		}
+		for (var intItr = 1; intItr != intVal; intItr++) {
+			var strTextCrumb = arrVal[intItr],
+				intCrumb = arrCrumbs[intItr],
+				intParentCrumb = arrCrumbs[intItr - 1];
+			if (intParentCrumb === null && arrCrumbs.length > 2) {
+				arrCrumbs[intItr] = null;
+				arrCrumbsValues[intItr] = strTextCrumb;
+			} else {
+				if (strTextCrumb == "") {
+					arrCrumbs[intItr] = null;
+					arrCrumbsValues[intItr] = "";
+					continue;
+				}
+				var arrStacks = app.data.stacks[intParentCrumb],
+					arrBuffer = [];
+				if (!arrStacks) {
+					arrCrumbs[intItr] = null;
+					arrCrumbsValues[intItr] = strTextCrumb;
+					continue;
+				}
+				for (var intStack in arrStacks) {
+					var objStack = arrStacks[intStack];
+					if (objStack.is_url == 0)
+						arrBuffer.push(objStack);
+				}
+				arrBuffer.sort(function (a, b) {
+					return a.order_id - b.order_id;
+				});
+				var boolTextSearch = false;
+				textSearch: while (1) {
+					boolTextSearch = false;
+					for (var intBuffer in arrBuffer) {
+						var objStack = arrBuffer[intBuffer];
+						if (intCrumb != null) {
+							if (objStack.stack_id == intCrumb) {
+								if (objStack.nickname != strTextCrumb) {
+									intCrumb = null;
+									continue textSearch;
+								} else {
+									boolTextSearch = true;
+									break;
+								}
+							}
+						} else {
+							if (strTextCrumb == objStack.nickname) {
+								boolTextSearch = true;
+								arrCrumbs[intItr] = objStack.stack_id * 1;
+								arrCrumbsValues[intItr] = strTextCrumb;
+								break;
+							}
+						}
+					}
+					break;
+				}
+				if (!boolTextSearch) {
+					arrCrumbs[intItr] = null; // set as new folder
+					arrCrumbsValues[intItr] = strTextCrumb;
+				}
+			}
+		}
+		arrCrumbs.length = intItr;
+		arrCrumbsValues.length = intItr;
+
+		for (var intItr = 0; intItr != intVal; intItr++) {
+			var strCurrentVal = arrVal[intItr],
+				intCurrentVal = strCurrentVal.length;
+			if (
+				intCaretPos >= intValCharPast
+				&& intCaretPos <= intValCharPast + intCurrentVal
+			) {
+				intCaretItem = intItr;
+				break;
+			}
+			intValCharPast += intCurrentVal + 1;
+		}
+		if (!intCaretItem) intCaretItem++;
+		intCaretItem--;
+		intSelectedCrumb = arrCrumbs[intCaretItem + 1];
+		intOpenMenuIndex = intCaretItem;
+		var boolLastCrumb = intCaretItem == intVal - 2;
+		var intCrumb = !intCaretItem ? 0 : arrCrumbs[intCaretItem];
+		if (intMenuItem != intCrumb || (intSelectedCrumb == null && !boolLastCrumb)) {
+			//drawMenu(intCrumb);
+			return intCrumb
+		}
+	}
+	function displayNoStacks() {
+		var arrMissingNicknames = [],
+			intCrumbs = arrCrumbs.length;
+		for (var intItr = 0; intItr != intCrumbs; ++intItr) {
+			var intCrumb = arrCrumbs[intItr];
+			if (intCrumb === null) {
+				var strCrumbValue = arrCrumbsValues[intItr];
+				if (strCrumbValue.length)
+					arrMissingNicknames.push(strCrumbValue);
+			}
+		}
+		if (arrMissingNicknames.length) {
+			return `Create stack:<b>${arrMissingNicknames.join("/")}</b>`
+		} else {
+			return '<b>Empty</b>'
+		}
+	}
+	function loadStacks(intParent) {
+		var arrStacks = app.data.stacks[intParent]
+		if (arrStacks) {
+			var arrBuffer = arrStacks.filter(stack => stack.is_url == '0')
+				.sort((a, b) => { return a.order_id - b.order_id })
+				.map((objStack) => {
+					return { value: objStack.stack_id, text: objStack.nickname.trim(), description: '' }
+				})
+			return arrBuffer
+		} else {
+			return []
+		}
+	}
+	function cleanUpTempStacks() {
+		var intCrumbs = arrCrumbs.length,
+			arrDeleteItems = [];
+		for (var intStack in arrTempStacks) {
+			var boolFound = false;
+			for (var intItr = 0; intItr != intCrumbs; ++intItr) {
+				var intCrumb = arrCrumbs[intItr];
+				if (intStack == intCrumb) {
+					boolFound = true;
+					break;
+				}
+			}
+			if (!boolFound) {
+				var intParent = arrTempStacks[intStack];
+				if (!app.data.stacks[intParent])
+					continue;
+				arrDeleteItems.push(intStack);
+				var intCurrent = app.data.stacks[intParent].length;
+				if (intCurrent == 1) {
+					delete app.data.stacks[intParent];
+				} else {
+					for (var intItr = 0; intItr != intCurrent; ++intItr) {
+						var objStack = app.data.stacks[intParent][intItr];
+						if (!objStack)
+							continue;
+						if (objStack.stack_id == intStack)
+							delete app.data.stacks[intParent][intItr];
+					}
+				}
+				delete arrTempStacks[intStack];
+			}
+		}
+		if (arrDeleteItems.length)
+			app.backgroundPost({
+				url: "https://webcull.com/api/remove",
+				post: {
+					stack_id: arrDeleteItems
+				}
+			}, 1)
+				.then(function (response) { })
+				.catch(error => { console.log(error) })
+	}
+	function didCrumbsChange() {
+		var strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/, ''),
+			strLastCrumbsString = arrLastCrumbsValues.join("\t").replace(/\t+$/, '');
+		if (strCrumbsString != strLastCrumbsString)
+			return true;
+		strCrumbsString = arrCrumbs.join("\t").replace(/\t+$/, '');
+		strLastCrumbsString = arrLastCrumbs.join("\t").replace(/\t+$/, '');
+		if (strCrumbsString != strLastCrumbsString)
+			return true;
+	}
+	app.saveCrumbs = saveChanges;
+	function saveChanges() {
+		if (!didCrumbsChange()) {
+			return;
+		}
+		var objBookmark = app.getBookmark();
+		app.backgroundPost({
+			url: "https://webcull.com/api/savelocation",
+			post: {
+				arrCrumbs: arrCrumbs,
+				arrCrumbsValues: arrCrumbsValues,
+				stack_id: objBookmark.stack_id
+			}
+		}, 1)
+			.then(function (data) {
+				var intNewStacks = data.new_stack_ids.length;
+				if (intNewStacks) {
+					for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+						arrCrumbs.pop(); // take the nulls off the end
+					}
+					var
+						intCrumbs = arrCrumbs.length,
+						intParent = arrCrumbs[intCrumbs - 1] * 1;
+					for (var intItr = 0; intItr != intNewStacks; ++intItr) {
+						var intStack = data.new_stack_ids[intItr] * 1;
+						arrCrumbs.push(intStack);
+						if (!app.data.stacks[intParent])
+							app.data.stacks[intParent] = [];
+						var objNewStack = {
+							stack_id: intStack,
+							parent_id: intParent,
+							is_url: 0,
+							nickname: arrCrumbsValues[intItr + intCrumbs],
+							value: "",
+							order_id: app.data.stacks[intParent].length + 1
+						};
+						arrTempStacks[intStack] = intParent;
+						app.data.stacks[intParent].push(objNewStack);
+						intParent = intStack;
+					}
+					arrLastCrumbs = arrCrumbs.slice(0);
+					arrLastCrumbsValues = arrCrumbsValues.slice(0);
+				}
+				cleanUpTempStacks();
+			})
+			.catch(function (error) {
+
+			})
+		arrLastCrumbs = arrCrumbs.slice(0);
+		arrLastCrumbsValues = arrCrumbsValues.slice(0);
+	}
 	$("#webcull-action").click(function () {
 		chrome.tabs.update({
 			url: "https://webcull.com/bookmarks/"

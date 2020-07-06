@@ -41,7 +41,7 @@ $(function () {
 			strEvents = 'keyup.stackUpdate click.stackUpdate blur.stackUpdate change.stackUpdate',
 			refUpdateDelay,
 			strCurrentValue = $this.val();
-		if ($this.hasClass('stackUpdate'))return $this;
+		if ($this.hasClass('stackUpdate')) return $this;
 		$this.addClass('stackUpdate')
 			.bind(strEvents, function () {
 				var strName = $this.attr('name'),
@@ -65,16 +65,16 @@ $(function () {
 			});
 		function updateCall(that) {
 			var $this = $(that);
-			if ($this.hasClass('error'))return;
+			if ($this.hasClass('error')) return;
 			var strVal = $this.val();
-			if (strVal == strCurrentValue)return;
+			if (strVal == strCurrentValue) return;
 			// make sure it still exists
 			strCurrentValue = strVal;
 			var strName = $this.attr('name');
 			if (!strName || !strName.length) {
 				return alert('Error missing name parameter for update call');
 			}
-			app.modifyBookmark(strName , strVal)
+			app.modifyBookmark(strName, strVal)
 		}
 		return $this;
 	});
