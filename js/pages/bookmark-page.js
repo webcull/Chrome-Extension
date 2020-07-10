@@ -206,46 +206,6 @@ pages['bookmark-page'] = function ($self) {
 }
 /* modules and binders */
 $(function () {
-	// Tags input
-	(function () {
-		var $tagDrop = $("#save-tags-drop"),
-			$tagInput = $("#bookmark-tags-input"),
-			strItemMarkup = "<div class='save-location-drop-item'></div>",
-			minCharactersForSuggestion = 1;
-		function showTagSuggestions() {
-			$tagDrop.removeClass('hidden').addClass('show')
-
-		}
-		function hideTagSuggestions() {
-			$tagDrop.addClass('hidden').removeClass('show')
-
-		}
-		function clearSuggestions() {
-			$tagDrop.html('')
-		}
-		function addSuggestion(suggestion) {
-			$item = $(strItemMarkup).text(suggestion.value)
-			$tagDrop.append($item)
-			showTagSuggestions()
-		}
-		$tagInput.on('keyup', function (event) {
-			hideTagSuggestions();
-			clearSuggestions();
-			var input = $tagInput.val() || '';
-			if (!input.length) return true
-			input = input.split(',')[input.split(",").length - 1].trim()
-			if (input.length >= minCharactersForSuggestion) {
-				var arrTagObjects = Object.entries(app.objTags).map((arrKeyvalue) => {
-					return { value: arrKeyvalue[0], text: arrKeyvalue[0], description: `Used in ${arrKeyvalue[1]} locations` }
-				}).filter(value => input.localeCompare(value.text.slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
-				arrTagObjects.forEach(function (suggestion) { addSuggestion(suggestion); });
-			}
-		})
-		$tagInput.on('blur', function (event) {
-			hideTagSuggestions()
-			clearSuggestions();
-		})
-	})();
 	$("#webcull-action").click(function () {
 		chrome.tabs.update({
 			url: "https://webcull.com/bookmarks/"
@@ -259,12 +219,10 @@ $(function () {
 		});
 		window.close();
 	});
-
-	/* auto update textbox binder */
+	/* auto update text-box binder */
 	$(".initStackUpdate").each(function () {
 		$(this).stackUpdate();
 	});
-
 	/* bookmark location breadcrumbs binder */
 	(function () {
 		// init breadcrumbs
@@ -318,7 +276,7 @@ $(function () {
 			arrLastCrumbsValues = arrCrumbsValues.slice(0);
 		});
 		// loop through crumbs to see if temp crumbs are no longer in use
-		// if they are, initalize a the deletion of them
+		// if they are, initialize a the deletion of them
 		function cleanUpTempStacks() {
 			var intCrumbs = arrCrumbs.length,
 				arrDeleteItems = [];
@@ -756,7 +714,6 @@ $(function () {
 				dropMenu();
 				intOpenMunuIndex = 0;
 				drawMenu(intParent);
-				bindKeyboard();
 			}
 			processLocationText();
 		}
@@ -766,16 +723,62 @@ $(function () {
 			saveChanges();
 		}
 		var refDeactivationTimeout;
+		bindKeyboard();
 		$("#save-location-input").on("focus keyup keydown keypress click change", function () {
-			if (refDeactivationTimeout)
-				$.clear(refDeactivationTimeout);
+			if (refDeactivationTimeout) $.clear(refDeactivationTimeout);
 			activateLoaf();
 		});
 		$("#save-location-input").on("blur", function () {
-			refDeactivationTimeout = $.delay(50, deactivateLoaf);
+			refDeactivationTimeout = $.delay(200, deactivateLoaf);
 		});
 	})();
+	// Tags suggestion input
+	(function () {
+		var $tagsInput = $("#bookmark-tags-input"), tagsHideTimeout;
+		$tagsInput.on("focus keyup keydown keypress click change", function () {
+			if (tagsHideTimeout) $.clear(tagsHideTimeout);
+			return true
+		});
+		$tagsInput.on("blur", function () {
+			tagsHideTimeout = $.delay(200, function () {
+				$tagsInput[0].inputAutocomplete && $tagsInput[0].inputAutocomplete.hide();
+				return true
+			});
+		});
 
+		var tags = new InputAutocomplete({
+			selector: '#tags',
+			minCharactersForSuggestion: 1,
+			suggestionCallback: function (input) {
+				var arrTags = String(input).replace(/\s+/g, ',').split(',').filter(tag => tag.length > 0),
+					input,
+					arrTagObjects = [];
+				if (!arrTags.length) return arrTagObjects;
+				input = arrTags[arrTags.length - 1];
+				arrTagObjects = Object.entries(app.objTags)
+					.filter(arrKeyValue => arrTags.indexOf(arrKeyValue[0]) === -1)
+					.filter(arrKeyValue => input.localeCompare(arrKeyValue[0].slice(0, input.length), undefined, { sensitivity: 'base' }) === 0)
+					.map((arrKeyValue) => {
+						return {
+							value: arrKeyValue[0],
+							text: arrKeyValue[0],
+							description: `Used in ${arrKeyValue[1]} locations`
+						}
+					})
+				return arrTagObjects
+			},
+			onSelect: function (selected) {
+				var arrTags = String($tagsInput.val())
+					.replace(/\s+/g, ',')
+					.split(',')
+					.filter(tag => tag.length > 0)
+				arrTags.pop()
+				arrTags.push(selected.text)
+				$tagsInput.val(arrTags.join(",")).trigger('update');
+			}
+		});
+
+	})();
 	/*  Account switching */
 	(function () {
 		var $account_switcher = $("#account-switcher"),

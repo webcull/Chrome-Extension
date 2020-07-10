@@ -6,6 +6,7 @@
 	<script src="../js/lib/q.js"></script>
 	<script src="../js/lib/lib.js"></script>
 	<script src="../js/lib/plugins.js"></script>
+	<script src="../js/lib/autocomplete.js"></script>
 	<script src="../js/lib/paging.js"></script>
 	<script src="../js/pages/accounts-page.js"></script>
 	<script src="../js/pages/bookmark-page.js"></script>
@@ -85,10 +86,9 @@
 				</div>
 			</div>
 			<div id="save-tags">
-				<div class='is-loaded-block placeholder'>
+				<div class='is-loaded-block placeholder' id="tags">
 					<div class='placeholder-label'>Tags</div>
 					<input class='placeholder-input initStackUpdate' autocomplete="off" id="bookmark-tags-input" name="tags" type="text">
-					<div id='save-tags-drop' class="hidden"></div>
 				</div>
 			</div>
 			<div id="bookmark-extra-details" class='is-loaded-block'>
