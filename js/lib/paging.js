@@ -10,3 +10,9 @@ function paging(strPageName, objPageContext = null) {
 		$page.addClass('active-on');
 	});
 }
+function is_loading() {
+	$('body').addClass('is-loading-override');
+}
+function is_loaded() {
+	$('body').removeClass('is-loading-override');
+}

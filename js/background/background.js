@@ -49,6 +49,7 @@ function initalizeAccount() {
 
 app.processURLs = processURLs;
 function processURLs() {
+	app.objTags = {};
 	for (var intParent in app.data.stacks) {
 		var intLen = app.data.stacks[intParent].length;
 		for (var intItr = 0; intItr < intLen; ++intItr) {
@@ -57,7 +58,7 @@ function processURLs() {
 				app.urls[objStack.value] = 1;
 			}
 			if (objStack.tags && objStack.tags.length){
-				var arrTags = String(objStack.tags).split(',')
+				var arrTags = String(objStack.tags).split(/[ ,]+/g);
 				arrTags.forEach((tag)=>{
 					if (tag in app.objTags){
 						app.objTags[tag]+=1

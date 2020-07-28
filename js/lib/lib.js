@@ -33,7 +33,7 @@ async function sessionPost(arrParams) {
 	return new Promise(function (resolve, reject) {
 		getCookies("https://webcull.com", "__DbSessionNamespaces").then(function (session_hash) {
 			if (arrDefaultParams) $.extend(arrParams.post, arrDefaultParams);
-			$.extend(arrParams.post, { __DbSessionNamespaces: session_hash });
+			$.extend(arrParams.post, { __DbSessionNamespaces: decodeURIComponent(session_hash) });
 			fetch(arrParams.url, {
 				method: 'post',
 				headers: { "Content-type": "application/x-www-form-urlencoded; charset=UTF-8" },

@@ -1,7 +1,8 @@
 #progress-bar {
-	background-color:#eee;
-	height:50px;
+	background-color:#eef;
+	height:60px;
 	position: relative;
+	transition:none;
 }
 #progress-bar-complete-text,
 #progress-bar-text {
@@ -28,7 +29,7 @@
 	color:#fff;
 }
 #progress-bar.loading-started .progress-bar-complete {
-	width:25%;
+	width:0;
 }
 #progress-bar.response-recieved .progress-bar-complete {
 	width:50%;
@@ -51,8 +52,11 @@
 	z-index:1;
 	background-color: #3b99fc;
 	color:#fff;
-	transition:1s opacity cubic-bezier(0.075, 0.82, 0.165, 1);
+	transition:0.25s opacity cubic-bezier(0.075, 0.82, 0.165, 1);
 	display:flex;
+}
+body.is-loaded #bookmark-page {
+	height:444px;
 }
 #html-bookmark-page,
 #html-bookmark-page body {
@@ -62,15 +66,12 @@ body.is-loaded #account {
 	opacity:1;
 }
 
-#webcull-action{
+#webcull-action {
 	position: absolute;
 	width: 221px;
 	height: 50px;
 	z-index: 10;
-}
-#webcull-action:hover{
-	border: 2px solid greenyellow;
-
+	cursor:pointer;
 }
 #account-icon {
 	width:50px;
@@ -350,70 +351,54 @@ body:not(.is-loaded) .is-loaded-block {
 .right {
 	flex: 1;
 }
-#account-switcher{
-	height: 370px;
-	background-color: #eee;
+#bookmark-main-view {
+	position: absolute;
+	margin-top:-10px;
+	left:0;
+	width:100%;
+	transition: 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+	box-sizing: border-box;
+}
+.animate-out {
+	left:300px !important;
+}
+#account-switcher {
+	margin-top:-10px;
+	padding-right:10px;
+	position: absolute;
+	left:-300px;
+	width:100%;
+	height:100%;
 	overflow-y: scroll;
+	z-index: 100;
+	transition: 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
+	box-sizing: border-box;
+	background-color: #fff;
+}
+#account-switcher-inner {
+	position: relative;
 }
 #account-switcher .header{
 	text-align: center;
-	margin: 12px;
+	margin: 20px;
 }
-.animate-opacity{
-	animation:opac 0.8s
+#account-switcher.animate-in {
+	left:10px !important;
 }
-@keyframes opac{
-	from{
-		opacity:0
-	}
-	to{
-		opacity:1
-	}
-}
-.animate-left{
-	display: block;
-	position:relative;
-	animation:animateleft 0.4s
-}
-@keyframes animateleft{
-	from{
-		left:-300px;
-		opacity:0
-	} 
-	to{
-		left:0;
-		opacity:1
-	}
-}
-.animate-right{
-	position:relative;
-	animation:animateright 0.4s
-}
-@keyframes animateright{
-	from{
-		right:-300px;
-		opacity:0
-	} to{
-		right:0;
-		opacity:1
-	}
-}
-
 #accountsList {
 	display: inline-block;
-	width: 290px;
-	margin-bottom: 20px;
-	margin-top: 10px;
+	width: 100%;
+	margin-bottom: 10px;
 }
 #accountsList .userRow {
 	display: block;
-	/* background-color: #444; */
 	height: 60px;
 	margin-bottom: 2px;
 	text-align: left;
 	position: relative;
 	text-decoration: none;
 	overflow: hidden;
+	border-radius: 5px;
 }
 a * {
 	cursor: pointer!important;
@@ -421,6 +406,7 @@ a * {
 
 #accountsList .userText {
 	padding-left: 60px;
+	color:#000;
 }
 #accountsList .userIcon {
 	position: absolute;
@@ -436,13 +422,17 @@ a * {
 .focus:not(.disabled) {
 	border-color: #336699!important;
 }
-#accountsList .userRow.loading .userName, #accountsList .userRow:hover .userName, #accountsList .userRow.focus .userName, #accountsList .userRow.loading .radial-loader:after {
-	background-color: #369;
+#accountsList .userRow.loading .userName, 
+#accountsList .userRow:hover .userName, 
+#accountsList .userRow.focus .userName, 
+#accountsList .userRow.loading .radial-loader:after {
+	background-color: #3b99fc;
+	color:#fff;
 }
 
 #accountsList .userName {
 	padding-left: 20px;
-	background-color: #dcdada;
+	background-color: #efefef;
 	line-height: 60px;
 	position: relative;
 }
@@ -488,7 +478,7 @@ a * {
 	border-radius: 0 0 5px 5px;
 	border:2px solid #3b99fc;
 	border-top:1px solid #ccc;
-	max-height: 190px;
+	max-height: 146px;
 	overflow-y:auto;
 	z-index:22;
 }
@@ -510,4 +500,43 @@ a * {
 
 .autocomplete-container .token-autocomplete-suggestions li.token-autocomplete-suggestion-highlighted {
 	background-color:#bbb;
+}
+
+.no-account {
+    text-align:center;
+    color:#667;
+}
+#addAccountPH {
+	text-align: center;
+}
+#addAccount {
+	display: inline-block;
+	border:1px solid #202022;
+	padding:16px;
+	border-radius: 60px;
+	display:inline-block;
+	width:60px;
+	height:60px;
+	transform:scale(0.8);
+	opacity:0.6;
+}
+#addAccount:hover {
+	opacity:0.9;
+	background-color: #3b99fc;
+	border:1px solid #3b99fc;
+}
+#addAccount img {
+	filter:invert(12%) sepia(5%) saturate(403%) hue-rotate(201deg) brightness(95%) contrast(98%);
+	width:25px;
+	height:25px;
+	border:0;
+	position: absolute;
+	top:50%;
+	left:50%;
+	margin-top:-12px;
+	margin-left:-12px;
+	transform:rotate(0deg);
+}
+#addAccount:hover img {
+	filter:invert(1);
 }

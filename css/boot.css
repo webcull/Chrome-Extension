@@ -92,6 +92,12 @@ body {
 .is-init {
 	display:none;
 }
+body.is-loading-override .loading-page {
+	display:block;
+}
+body.is-loading-override .page:not(.loading-page) {
+	display:none;
+}
 
 
 /* loader */

@@ -25,6 +25,11 @@ var InputAutocomplete = /** @class */ (function () {
 
         this.autocomplete = new InputAutocomplete.Autocomplete(this);
         var me = this;
+        this.textInput.addEventListener('keydown', function (event) {
+            if (event.which == me.KEY_UP || event.keyCode == me.KEY_UP || event.which == me.KEY_DOWN || event.keyCode == me.KEY_DOWN) {
+                event.preventDefault();
+            }
+        });
         this.textInput.addEventListener('keyup', function (event) {
             var _a, _b;
 

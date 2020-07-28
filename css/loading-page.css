@@ -7,7 +7,7 @@
 #loading-page {
 	background-color: #3b99fc;
 	color:#fff;
-	height:100%;
+	height:60px;
 	padding:10px;
 }
 #loading-page .loader {

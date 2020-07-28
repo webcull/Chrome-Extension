@@ -23,7 +23,7 @@
 <body>
 	<div class="page loading-page" id="loading-page">
 		<div class="loader-1 loader"><span></span></div>
-		<div class="loading-text">Loading account...</div>
+		<div class="loading-text">Bookmarking...</div>
 	</div>
 	<div class="page accounts-page" id="accounts-page">
 		<span class="logo-container"><img src="../images//signin-logo.png"></span>
@@ -32,9 +32,9 @@
 	</div>
 	<div class="page bookmark-page" id="bookmark-page">
 		<div id="progress-bar">
-			<div id="progress-bar-text">Loading...</div>
+			<div id="progress-bar-text">Bookmarking...</div>
 			<div id="progress-bar-complete" class="progress-bar-complete">
-				<div id="progress-bar-complete-text">Loading...</div>
+				<div id="progress-bar-complete-text">Done</div>
 			</div>
 		</div>
 		<div id="account" class="is-loaded">
@@ -49,56 +49,60 @@
 				</div>
 			</div>
 		</div>
-		<div id="account-switcher" class="hidden">
-			<div class="header">Quick switch account</div>
-			<div id="accountsList">
-			</div>
-		</div>
-		<div id="bookmark-main-view">
-			<div id="bookmark-details" class='is-loaded-block'>
-				<div id="bookmark-icon">
-					<div class="sk-folding-cube">
-						<div class="sk-cube1 sk-cube"></div>
-						<div class="sk-cube2 sk-cube"></div>
-						<div class="sk-cube4 sk-cube"></div>
-						<div class="sk-cube3 sk-cube"></div>
+		<main><div id="account-switcher">
+				<div id="account-switcher-inner">
+					<div class="header">Quick switch account</div>
+					<div id="accountsList">
+					</div>
+					<div id="addAccountPH">
+						<a id="addAccount" class="captureFocus" href="#"><div class="lessIcon"><span></span></div><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAYAAADDPmHLAAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAALEwAACxMBAJqcGAAAAu9JREFUeJzt3U9OE2Ech/FnSiKsXbh340pg5Qk8gofAY3gGtBqWXsKNIR5BF0ZkQ9h6A2pC62LAEP5ITdv3R+f7fJJ3QUh4ZzpPmaaZmReGZxf4ABwDE2C24Jhc/K33wE7D/dB/2gIOgCmLH/S7xhQYA5uN9klz2gK+sLoDf30cXsypB+KAdgf/coyb7Jnutctq/+3/63Sw3WD/VmpUvQFL8BroCubtgL2CeXXNMe3f/ZfjqMH+rVTFO2fZJsCjwrnX+sPgEAKYFc+/1q/hED4DaAEGEM4AwhlAOAMIZwDhDCCcAYQzgHAGEM4AwhlAOAMIZwDhDCCcAYQzgHAGEM4AwhlAOAMIZwDhDCCcAYQzgHAGEM4AwhlAOAMIZwDhDCCcAYQzgHAGEM4AwhlAOAMIZwDhDCDcbQEs+3n7qx7Vqvf/vjH3egctnrfvqB13rnfQ+nn7jtrxd72DDXpj4BVK8RR4DHzq6M/5X1nzZ97qv82A3Q3gDfCidltUoAOmHf0nxGfFG6MaPztqn7evWpOO/lygUH4TGM4AwhlAOAMIZwDhDCCcAYQzgHAGEM4AwhlAOAMIZwDhDCCcAYQbAb+rN0JlJiPgtHorVOZkRH+NuDIddvS3C33Dy8LTTLm4LPwX8AQvDU/zDvh4+cMm/amg+pYlR5vxmVuuBN+iv0XMm0OHO86Bfa4c/NvO+9vAHvCS/h6yG3eSaq1MgBP6//AHwPervxzCB79Z8fxr/Rr6TWA4AwhnAOEMIJwBhDOAcAYQzgDCGUA4AwhnAOEMIJwBhDOAcAYQzgDCGUA4AwhnAOEMIJwBhDOAcAYQzgDCGUA4AwhnAOEMIJwBhDOAcAYQzgDCGUA4AwhnAOEMIJwBhDOAcAYQbggBVK53MCmceymGEMBp4dwnhXMvxRACqFzvwLUWHoAdah5wfQ48b7B/msOY9gHsN9kzzaX1ege3Pm9ftVqsd3Djeft6eLbpl0M5As5Y/KCfAT+AtwzwnP8HNwiKJyPkCoYAAAAASUVORK5CYII="></a>
 					</div>
 				</div>
-				<div id="bookmark-values">
-					<div class='placeholder'>
-						<div class='placeholder-label'>Title</div>
-						<input class='placeholder-input initStackUpdate' id="bookmark-title-input" name="nickname"
-							type="text">
+			</div><div id="bookmark-main-view">
+				<div id="bookmark-details" class='is-loaded-block'>
+					<div id="bookmark-icon">
+						<div class="sk-folding-cube">
+							<div class="sk-cube1 sk-cube"></div>
+							<div class="sk-cube2 sk-cube"></div>
+							<div class="sk-cube4 sk-cube"></div>
+							<div class="sk-cube3 sk-cube"></div>
+						</div>
 					</div>
-					<div class='placeholder'>
-						<div class='placeholder-label'>Website URL</div>
-						<input class='placeholder-input initStackUpdate' id="bookmark-url-input" name="value" type="text">
+					<div id="bookmark-values">
+						<div class='placeholder'>
+							<div class='placeholder-label'>Title</div>
+							<input class='placeholder-input initStackUpdate' id="bookmark-title-input" name="nickname"
+								type="text">
+						</div>
+						<div class='placeholder'>
+							<div class='placeholder-label'>Website URL</div>
+							<input class='placeholder-input initStackUpdate' id="bookmark-url-input" name="value" type="text">
+						</div>
+						<!--input placeholder="Title" id="bookmark-nickname" class="details-input" type="text"><br>
+						<input placeholder="URL" id="bookmark-value" class="details-input" type="text"-->
 					</div>
-					<!--input placeholder="Title" id="bookmark-nickname" class="details-input" type="text"><br>
-					<input placeholder="URL" id="bookmark-value" class="details-input" type="text"-->
 				</div>
-			</div>
-			<div id="bookmark-status" class='is-loaded-block'></div>
-			<div id="save-location">
-				<div class='is-loaded-block placeholder'>
-					<div class='placeholder-label'>Bookmark Location</div>
-					<input class='placeholder-input' type="text" value="/" id="save-location-input">
+				<div id="bookmark-status" class='is-loaded-block'></div>
+				<div id="save-location">
+					<div class='is-loaded-block placeholder'>
+						<div class='placeholder-label'>Bookmark Location</div>
+						<input class='placeholder-input' type="text" value="/" id="save-location-input">
+					</div>
 				</div>
-			</div>
-			<div id="save-tags">
-				<div class='is-loaded-block placeholder' id="tags">
-					<div class='placeholder-label'>Tags</div>
-					<input class='placeholder-input initStackUpdate' autocomplete="off" id="bookmark-tags-input" name="tags" type="text">
+				<div id="save-tags">
+					<div class='is-loaded-block placeholder' id="tags">
+						<div class='placeholder-label'>Tags</div>
+						<input class='placeholder-input initStackUpdate' autocomplete="off" id="bookmark-tags-input" name="tags" type="text">
+					</div>
 				</div>
-			</div>
-			<div id="bookmark-extra-details" class='is-loaded-block'>
-				<div class='placeholder textarea'>
-					<div class='placeholder-label'>Notes</div>
-					<textarea id="bookmark-notes-input" class='placeholder-input initStackUpdate' name="notes"
-						type="text"></textarea>
+				<div id="bookmark-extra-details" class='is-loaded-block'>
+					<div class='placeholder textarea'>
+						<div class='placeholder-label'>Notes</div>
+						<textarea id="bookmark-notes-input" class='placeholder-input initStackUpdate' name="notes"
+							type="text"></textarea>
+					</div>
 				</div>
-			</div>
-		</div>
+			</div></main>
 	</div>
 	<div class="page network-page" id="network-page">
 		<span class="logo-container"><img src="../images//cloud-error-128.svg"></span>
