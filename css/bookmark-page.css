@@ -505,6 +505,7 @@ a * {
 .no-account {
     text-align:center;
     color:#667;
+    margin:20px;
 }
 #addAccountPH {
 	text-align: center;

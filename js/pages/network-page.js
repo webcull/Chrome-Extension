@@ -1,5 +1,5 @@
 var NETWORK_DEFAULTS = {
-    msg: 'There was a network connection error',
+    msg: "Can't connect to the cloud...",
     title: 'Network Error',
     callback: function () {
         paging('bookmark-page')

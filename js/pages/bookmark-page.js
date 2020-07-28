@@ -192,6 +192,7 @@ pages['bookmark-page'] = function ($self) {
 							loadAccounts();
 						})
 					}).catch(function (error) {
+						is_loaded();
 						/* Fetch error */
 						// Task: CHX-007
 						// show retry page
@@ -341,6 +342,8 @@ $(function () {
 					.catch(error => { console.log(error) })
 		}
 		function didCrumbsChange() {
+			if (!arrLastCrumbsValues)
+				return false;
 			var strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/, ''),
 				strLastCrumbsString = arrLastCrumbsValues.join("\t").replace(/\t+$/, '');
 			if (strCrumbsString != strLastCrumbsString)
