@@ -1,14 +1,14 @@
 {
   "name": "Save to WebCull",
   "short_name": "WebCull",
-  "version": "0.14.1",
+  "version": "0.14.2",
   "description": "A plugin that makes it easier to save websites to the WebCull bookmark manager.",
   "permissions": [
     "webRequest",
     "webNavigation",
     "tabs",
     "cookies",
-    "https://webcull.com/"
+    "https://webcull.com"
   ],
   "browser_action": {
       "default_title": "Add to WebCull",
