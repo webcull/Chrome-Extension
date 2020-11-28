@@ -1,7 +1,7 @@
 {
   "name": "Save to WebCull",
   "short_name": "WebCull",
-  "version": "0.14",
+  "version": "0.14.1",
   "description": "A plugin that makes it easier to save websites to the WebCull bookmark manager.",
   "permissions": [
     "webRequest",

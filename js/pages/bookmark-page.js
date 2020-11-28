@@ -32,7 +32,8 @@ var background = chrome.extension.getBackgroundPage(),
 		if (!arrUserAccounts.length) return;
 		var boolAdded = false;
 		for (let index = 0; index < arrUserAccounts.length; index++) {
-			if (app.data.user && (app.data.user.name === arrUserAccounts[index].name)) continue;
+			if (app.data.user && (app.data.user.name === arrUserAccounts[index].name)) 
+				continue;
 			var 
 			user = arrUserAccounts[index], 
 			$user = $(markUp), 
@@ -57,174 +58,174 @@ var background = chrome.extension.getBackgroundPage(),
 /* init process */
 pages['bookmark-page'] = function ($self) {
 	getTab()
-		.then(function (tab) {
-			var strURL = tab.url.replace(/ /, '+');
-			if (0 == 1 && !strURL.match(/http(s)?:\/\//i)) {
-				paging("loading-page");
-				// not http or https so just take user to webcull
-				chrome.tabs.update({
-					url: "https://webcull.com"
-				});
-			} else {
-				$("html,body").removeClass('is-init');
-				/* Try to save the current URL as a bookmark */
-				// Get the current URL
-				$("body").removeClass('is-loaded');
-				var $progressBar = $("#progress-bar");
-				$.delay(1, function () {
-					$progressBar.addClass('loading-started');
-				});
-				app.urls[strURL] = 1;
-				app.alterIcon(strURL);
-				var post = {
-					url: "https://webcull.com/api/autosavelink",
-					post: {
-						url: strURL
-					}
+	.then(function (tab) {
+		var strURL = tab.url;
+		if (0 == 1 && !strURL.match(/http(s)?:\/\//i)) {
+			paging("loading-page");
+			// not http or https so just take user to webcull
+			chrome.tabs.update({
+				url: "https://webcull.com"
+			});
+		} else {
+			$("html,body").removeClass('is-init');
+			/* Try to save the current URL as a bookmark */
+			// Get the current URL
+			$("body").removeClass('is-loaded');
+			var $progressBar = $("#progress-bar");
+			$.delay(1, function () {
+				$progressBar.addClass('loading-started');
+			});
+			app.urls[strURL] = 1;
+			app.alterIcon(strURL);
+			var post = {
+				url: "https://webcull.com/api/autosavelink",
+				post: {
+					url: encodeURIComponent(encodeURIComponent(strURL))
 				}
-				is_loading();
-				app.backgroundPost(post, 1)
-					.then(function (arrData) {
-						$("#bookmark-title-input").removeAttr('disabled')
-						$("#bookmark-url-input").removeAttr('disabled')
-						$("#bookmark-keywords-input").removeAttr('disabled')
-						$("#bookmark-notes-input").removeAttr('disabled')
-						$("#save-location-input").removeAttr('disabled')
-						is_loaded();
-						if (arrData.no_user) {
-							// FIX CHX-004 show accounts sign in 
-							// if not logged in
-							$progressBar.addClass('response-recieved').addClass('assets-loaded').addClass('complete');
-							// fire loaded event 
-							app.loaded()
-							return paging("accounts-page")
-						}
-						app.data = arrData;
-						app.processURLs();
-						$progressBar.addClass('response-recieved');
-						$progressBar.addClass('assets-loaded');
-						$("#account-user").html(arrData.user.name);
-						if (arrData.user.icon) {
-							var css = {
-								'background-image': "url('https://webcull.com" + arrData.user.icon + "')"
-							};
-							if (arrData.user.icon == "/static/images/icons/general/temp5.png") {
-								css.filter = 'brightness(1000%)';
-							} else {
-								css.filter = '';
-							}
-							$("#account-icon").addClass('custom').css(css);
-						}
-						var $bookmarkStatus = $("#bookmark-status"),
-							objBookmark = app.getBookmark();
-						if (objBookmark.user) {
-							$bookmarkStatus.html("Bookmark saved <a href='#' class='bookmark-status-link red' id='removeBookmark'>Undo</a>");
-						} else {
-							var intBookmarksFound = arrData.bookmarks_found.length;
-							$bookmarkStatus.html("Already saved in " + intBookmarksFound + " location" + (intBookmarksFound == 1 ? '' : 's') + " <a href='#' class='bookmark-status-link red' id='removeBookmark'>Remove</a>");
-						}
-						$bookmarkStatus.find("#removeBookmark").click(function () {
-							delete app.urls[strURL];
-							app.alterIcon(strURL);
-							app.backgroundPost({ url: "https://webcull.com/api/remove", post: { stack_id: objBookmark.stack_id } }, 1)
-								.then(function () {
-									// Fix CHX-005
-									$bookmarkStatus.html("Bookmark removed <a href='#' class='bookmark-status-link red' id='addBookmark'>Re-add</a>");
-									$("#bookmark-title-input").attr('disabled', true)
-									$("#bookmark-url-input").attr('disabled', true)
-									$("#bookmark-keywords-input").attr('disabled', true)
-									$("#bookmark-notes-input").attr('disabled', true)
-									$("#save-location-input").attr('disabled', true)
-									$bookmarkStatus.find("#addBookmark").click(function () {
-										$("#bookmark-title-input").removeAttr('disabled')
-										$("#bookmark-url-input").removeAttr('disabled')
-										$("#bookmark-keywords-input").removeAttr('disabled')
-										$("#bookmark-notes-input").removeAttr('disabled')
-										$("#save-location-input").removeAttr('disabled')
-										$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
-										paging('bookmark-page');
-									})
-								})
-								.catch(function (error) {
-									/* Fetch error */
-									console.log(error)
-								})
-						});
-						if (objBookmark.nickname)
-							$("#bookmark-title-input").val(objBookmark.nickname).trigger('update');
-						if (objBookmark.value)
-							$("#bookmark-url-input").val(objBookmark.value).trigger('update');
-						if (objBookmark.tags)
-							//bookmarkTags.val=objBookmark.tags.split(',');
-							$("#bookmark-tags-input").val(objBookmark.tags).trigger('update');
-						if (objBookmark.notes)
-							$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
-						if (objBookmark.icon)
-							$("#bookmark-icon").css({
-								'background-image': 'url("https://webcull.com/repository/images/websites/icons/' + objBookmark.icon + '")'
-							});
-						$("body").addClass('is-loaded');
-						$progressBar.addClass('complete');
-						app.loaded();
-						if (!objBookmark.parse_date || objBookmark.parse_date == "") {
-							$("#bookmark-icon").addClass("loading");
-							app.backgroundPost({ url: "https://webcull.com/api/process", post: { web_data_id: objBookmark.web_data_id } }, 1)
-								.then(function (objResponse) {
-									$("#bookmark-icon").removeClass("loading");
-									if (objResponse.icon)
-										$("#bookmark-icon").css({
-											'background-image': 'url("https://webcull.com/repository/images/websites/icons/' + objResponse.icon + '")'
-										});
-									if (objResponse.nickname)
-										$("#bookmark-title-input").val(objResponse.nickname).trigger('update');
-								})
-								.catch(err => { console.log(err) })
-						}
-						$progressBar.removeClass('complete')
-							.removeClass('assets-loaded')
-							.removeClass('response-recieved')
-							.removeClass('loading-started')
-						$.delay(50, function () {
-							sessionPostWithRetries({ url: "https://webcull.com/api/accounts", post: {}, }, 1)
-								.then((response) => {
-									app.accounts = response.users
-								})
-							loadAccounts();
-						})
-					}).catch(function (error) {
-						is_loaded();
-						/* Fetch error */
-						// Task: CHX-007
-						// show retry page
-						$progressBar.removeClass('complete')
-							.removeClass('assets-loaded')
-							.removeClass('response-recieved')
-							.removeClass('loading-started')
+			}
+			is_loading();
+			app.backgroundPost(post, 1)
+				.then(function (arrData) {
+					$("#bookmark-title-input").removeAttr('disabled')
+					$("#bookmark-url-input").removeAttr('disabled')
+					$("#bookmark-keywords-input").removeAttr('disabled')
+					$("#bookmark-notes-input").removeAttr('disabled')
+					$("#save-location-input").removeAttr('disabled')
+					is_loaded();
+					if (arrData.no_user) {
+						// FIX CHX-004 show accounts sign in 
+						// if not logged in
+						$progressBar.addClass('response-recieved').addClass('assets-loaded').addClass('complete');
 						// fire loaded event 
 						app.loaded()
-						if (error.constructor.name === 'WebCullError') {
-							if (error.code === 'NO_COOKIE') return paging("accounts-page")
+						return paging("accounts-page")
+					}
+					app.data = arrData;
+					app.processURLs();
+					$progressBar.addClass('response-recieved');
+					$progressBar.addClass('assets-loaded');
+					$("#account-user").html(arrData.user.name);
+					if (arrData.user.icon) {
+						var css = {
+							'background-image': "url('https://webcull.com" + arrData.user.icon + "')"
+						};
+						if (arrData.user.icon == "/static/images/icons/general/temp5.png") {
+							css.filter = 'brightness(1000%)';
+						} else {
+							css.filter = '';
 						}
-						else {
-							var context = {
-								callback: function () {
-									paging('bookmark-page')
-								},
-								title: 'Request Error',
-								msg: 'An Error ocurred while saving bookmark. Ensure you have an Active Internet connection',
-								action: 'Try Again'
-
-							}
-							console.log(error)
-							return paging('network-page', context)
-						}
+						$("#account-icon").addClass('custom').css(css);
+					}
+					var $bookmarkStatus = $("#bookmark-status"),
+						objBookmark = app.getBookmark();
+					if (objBookmark.user) {
+						$bookmarkStatus.html("Bookmark saved <a href='#' class='bookmark-status-link red' id='removeBookmark'>Undo</a>");
+					} else {
+						var intBookmarksFound = arrData.bookmarks_found.length;
+						$bookmarkStatus.html("Already saved in " + intBookmarksFound + " location" + (intBookmarksFound == 1 ? '' : 's') + " <a href='#' class='bookmark-status-link red' id='removeBookmark'>Remove</a>");
+					}
+					$bookmarkStatus.find("#removeBookmark").click(function () {
+						delete app.urls[strURL];
+						app.alterIcon(strURL);
+						app.backgroundPost({ url: "https://webcull.com/api/remove", post: { stack_id: objBookmark.stack_id } }, 1)
+							.then(function () {
+								// Fix CHX-005
+								$bookmarkStatus.html("Bookmark removed <a href='#' class='bookmark-status-link red' id='addBookmark'>Re-add</a>");
+								$("#bookmark-title-input").attr('disabled', true)
+								$("#bookmark-url-input").attr('disabled', true)
+								$("#bookmark-keywords-input").attr('disabled', true)
+								$("#bookmark-notes-input").attr('disabled', true)
+								$("#save-location-input").attr('disabled', true)
+								$bookmarkStatus.find("#addBookmark").click(function () {
+									$("#bookmark-title-input").removeAttr('disabled')
+									$("#bookmark-url-input").removeAttr('disabled')
+									$("#bookmark-keywords-input").removeAttr('disabled')
+									$("#bookmark-notes-input").removeAttr('disabled')
+									$("#save-location-input").removeAttr('disabled')
+									$progressBar.removeClass('loading-started').removeClass('response-recieved').removeClass('assets-loaded').removeClass('complete')
+									paging('bookmark-page');
+								})
+							})
+							.catch(function (error) {
+								/* Fetch error */
+								console.log(error)
+							})
+					});
+					if (objBookmark.nickname)
+						$("#bookmark-title-input").val(objBookmark.nickname).trigger('update');
+					if (objBookmark.value)
+						$("#bookmark-url-input").val(objBookmark.value).trigger('update');
+					if (objBookmark.tags)
+						//bookmarkTags.val=objBookmark.tags.split(',');
+						$("#bookmark-tags-input").val(objBookmark.tags).trigger('update');
+					if (objBookmark.notes)
+						$("#bookmark-notes-input").val(objBookmark.notes).trigger('update');
+					if (objBookmark.icon)
+						$("#bookmark-icon").css({
+							'background-image': 'url("https://webcull.com/repository/images/websites/icons/' + objBookmark.icon + '")'
+						});
+					$("body").addClass('is-loaded');
+					$progressBar.addClass('complete');
+					app.loaded();
+					if (!objBookmark.parse_date || objBookmark.parse_date == "") {
+						$("#bookmark-icon").addClass("loading");
+						app.backgroundPost({ url: "https://webcull.com/api/process", post: { web_data_id: objBookmark.web_data_id } }, 1)
+							.then(function (objResponse) {
+								$("#bookmark-icon").removeClass("loading");
+								if (objResponse.icon)
+									$("#bookmark-icon").css({
+										'background-image': 'url("https://webcull.com/repository/images/websites/icons/' + objResponse.icon + '")'
+									});
+								if (objResponse.nickname)
+									$("#bookmark-title-input").val(objResponse.nickname).trigger('update');
+							})
+							.catch(err => { console.log(err) })
+					}
+					$progressBar.removeClass('complete')
+						.removeClass('assets-loaded')
+						.removeClass('response-recieved')
+						.removeClass('loading-started')
+					$.delay(50, function () {
+						sessionPostWithRetries({ url: "https://webcull.com/api/accounts", post: {}, }, 1)
+							.then((response) => {
+								app.accounts = response.users
+							})
+						loadAccounts();
 					})
-			}
-		})
-		.catch(function (error) {
-			/* Failed t get tab */
-			console.log(error)
-		})
+				}).catch(function (error) {
+					is_loaded();
+					/* Fetch error */
+					// Task: CHX-007
+					// show retry page
+					$progressBar.removeClass('complete')
+						.removeClass('assets-loaded')
+						.removeClass('response-recieved')
+						.removeClass('loading-started')
+					// fire loaded event 
+					app.loaded()
+					if (error.constructor.name === 'WebCullError') {
+						if (error.code === 'NO_COOKIE') return paging("accounts-page")
+					}
+					else {
+						var context = {
+							callback: function () {
+								paging('bookmark-page')
+							},
+							title: 'Request Error',
+							msg: 'An Error ocurred while saving bookmark. Ensure you have an Active Internet connection',
+							action: 'Try Again'
+
+						}
+						console.log(error)
+						return paging('network-page', context)
+					}
+				})
+		}
+	})
+	.catch(function (error) {
+		/* Failed t get tab */
+		console.log(error)
+	})
 }
 /* modules and binders */
 $(function () {
@@ -249,19 +250,19 @@ $(function () {
 	(function () {
 		// init breadcrumbs
 		var $input = $("#save-location-input"),
-			arrCrumbs = [0],
-			arrCrumbsValues = [""],
-			arrLastCrumbs,
-			arrLastCrumbsValues,
-			boolMenuDropped = false,
-			intOpenMunuIndex = 0,
-			$saveLocationDrop = $("<div id='save-location-drop'></div>"),
-			intMenuItem = 0,
-			intSelectedCrumb = 0,
-			$empty = null,
-			// a list of ids that have been created
-			// stacks should be removed if they were created here but are no longer part of the list
-			arrTempStacks = {};
+		arrCrumbs = [0],
+		arrCrumbsValues = [""],
+		arrLastCrumbs,
+		arrLastCrumbsValues,
+		boolMenuDropped = false,
+		intOpenMunuIndex = 0,
+		$saveLocationDrop = $("<div id='save-location-drop'></div>"),
+		intMenuItem = 0,
+		intSelectedCrumb = 0,
+		$empty = null,
+		// a list of ids that have been created
+		// stacks should be removed if they were created here but are no longer part of the list
+		arrTempStacks = {};
 		$input.trigger('update')
 		app.loadedPromises.push(function () {
 			// work backwords to build the bread crumbs
@@ -482,15 +483,16 @@ $(function () {
 		}
 		// look for any changes in the text and caret location
 		function processLocationText() {
+			// take the input val, split it
 			var
-				strVal = $input.val(),
-				arrVals = strVal.split(/\//),
-				intVals = arrVals.length,
-				strLastVal = arrVals[intVals - 1],
-				intCaretPos = $input[0].selectionStart,
-				intCaretItem,
-				intValCharPast = 0,
-				strNewKeyword = null;
+			strVal = $input.val(),
+			arrVals = strVal.split(/\//),
+			intVals = arrVals.length,
+			strLastVal = arrVals[intVals - 1],
+			intCaretPos = $input[0].selectionStart,
+			intCaretItem,
+			intValCharPast = 0,
+			strNewKeyword = null;
 
 			if (
 				arrVals.length < 2
@@ -508,10 +510,10 @@ $(function () {
 			// text matching must be done through id when possible because duplicate names is a thing
 			for (var intItr = 1; intItr != intVals; intItr++) {
 				var
-					strTextCrumb = arrVals[intItr], // from text
-					intCrumb = arrCrumbs[intItr], // from mem
-					intParentCrumb = arrCrumbs[intItr - 1],
-					strCrumb = arrCrumbsValues[intItr]; // from mem
+				strTextCrumb = arrVals[intItr], // from text
+				intCrumb = arrCrumbs[intItr], // from mem
+				intParentCrumb = arrCrumbs[intItr - 1],
+				strCrumb = arrCrumbsValues[intItr]; // from mem
 				// if the parent doesnt exist theres nothing to search which means its always new
 				if (intParentCrumb === null && arrCrumbs.length > 2) { // no parent
 					arrCrumbs[intItr] = null; // set as new folder
