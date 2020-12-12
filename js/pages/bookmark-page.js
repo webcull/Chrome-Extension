@@ -102,6 +102,7 @@ pages['bookmark-page'] = function ($self) {
 					}
 					app.data = arrData;
 					app.processURLs();
+					app.initCrumbs();
 					$progressBar.addClass('response-recieved');
 					$progressBar.addClass('assets-loaded');
 					$("#account-user").html(arrData.user.name);
@@ -250,10 +251,6 @@ $(function () {
 	(function () {
 		// init breadcrumbs
 		var $input = $("#save-location-input"),
-		arrCrumbs = [0],
-		arrCrumbsValues = [""],
-		arrLastCrumbs,
-		arrLastCrumbsValues,
 		boolMenuDropped = false,
 		intOpenMunuIndex = 0,
 		$saveLocationDrop = $("<div id='save-location-drop'></div>"),
@@ -263,8 +260,15 @@ $(function () {
 		// a list of ids that have been created
 		// stacks should be removed if they were created here but are no longer part of the list
 		arrTempStacks = {};
-		$input.trigger('update')
-		app.loadedPromises.push(function () {
+		$input.trigger('update');
+		app.initCrumbs = initCrumbs;
+		app.loadedPromises.push(app.initCrumbs);
+		function initCrumbs() {
+			app.arrCrumbs = app.newParentArray(0);
+			app.arrCrumbsValues = app.newParentArray("");
+			app.arrLastCrumbs = app.arrCrumbs;
+			app.arrLastCrumbsValues = app.arrCrumbsValues;
+		
 			// work backwords to build the bread crumbs
 			var arrCrumbsFound = [],
 				objBookmark = app.getBookmark(),
@@ -281,32 +285,34 @@ $(function () {
 				var intParent = objBookmark.parent_id;
 				if (intParent != 0) {
 					// if not then reconstruct the crumbs from parent and stack id
-					arrCrumbs = [null];
+					app.arrCrumbs = [null];
 					while (1) {
 						var objStack = objStackIdLookup[intParent];
 						if (!objStack)
 							break;
 						intParent = objStack.parent_id * 1;
-						arrCrumbs.unshift(objStack.stack_id * 1);
-						arrCrumbsValues.unshift(objStack.nickname);
-					};
-					arrCrumbs.unshift(0);
-					arrCrumbsValues.unshift("");
-					$("#save-location-input").val(arrCrumbsValues.join("/"));
+						app.arrCrumbs.unshift(objStack.stack_id * 1);
+						app.arrCrumbsValues.unshift(objStack.nickname);
+					}
+					app.arrCrumbs.unshift(0);
+					app.arrCrumbsValues.unshift("");
+					$("#save-location-input").val(app.arrCrumbsValues.join("/"));
+				} else {
+					$("#save-location-input").val('/');
 				}
 			}
-			arrLastCrumbs = arrCrumbs.slice(0);
-			arrLastCrumbsValues = arrCrumbsValues.slice(0);
-		});
+			app.arrLastCrumbs = app.arrCrumbs.slice(0);
+			app.arrLastCrumbsValues = app.arrCrumbsValues.slice(0);
+		}
 		// loop through crumbs to see if temp crumbs are no longer in use
 		// if they are, initialize a the deletion of them
 		function cleanUpTempStacks() {
-			var intCrumbs = arrCrumbs.length,
+			var intCrumbs = app.arrCrumbs.length,
 				arrDeleteItems = [];
 			for (var intStack in arrTempStacks) {
 				var boolFound = false;
 				for (var intItr = 0; intItr != intCrumbs; ++intItr) {
-					var intCrumb = arrCrumbs[intItr];
+					var intCrumb = app.arrCrumbs[intItr];
 					if (intStack == intCrumb) {
 						boolFound = true;
 						break;
@@ -343,14 +349,14 @@ $(function () {
 					.catch(error => { console.log(error) })
 		}
 		function didCrumbsChange() {
-			if (!arrLastCrumbsValues)
+			if (!app.arrLastCrumbsValues)
 				return false;
-			var strCrumbsString = arrCrumbsValues.join("\t").replace(/\t+$/, ''),
-				strLastCrumbsString = arrLastCrumbsValues.join("\t").replace(/\t+$/, '');
+			var strCrumbsString = app.arrCrumbsValues.join("\t").replace(/\t+$/, ''),
+				strLastCrumbsString = app.arrLastCrumbsValues.join("\t").replace(/\t+$/, '');
 			if (strCrumbsString != strLastCrumbsString)
 				return true;
-			strCrumbsString = arrCrumbs.join("\t").replace(/\t+$/, '');
-			strLastCrumbsString = arrLastCrumbs.join("\t").replace(/\t+$/, '');
+			strCrumbsString = app.arrCrumbs.join("\t").replace(/\t+$/, '');
+			strLastCrumbsString = app.arrLastCrumbs.join("\t").replace(/\t+$/, '');
 			if (strCrumbsString != strLastCrumbsString)
 				return true;
 		}
@@ -363,8 +369,8 @@ $(function () {
 			app.backgroundPost({
 				url: "https://webcull.com/api/savelocation",
 				post: {
-					arrCrumbs: arrCrumbs,
-					arrCrumbsValues: arrCrumbsValues,
+					arrCrumbs: app.arrCrumbs,
+					arrCrumbsValues: app.arrCrumbsValues,
 					stack_id: objBookmark.stack_id
 				}
 			}, 1)
@@ -372,21 +378,21 @@ $(function () {
 					var intNewStacks = data.new_stack_ids.length;
 					if (intNewStacks) {
 						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
-							arrCrumbs.pop(); // take the nulls off the end
+							app.arrCrumbs.pop(); // take the nulls off the end
 						}
 						var
-							intCrumbs = arrCrumbs.length,
-							intParent = arrCrumbs[intCrumbs - 1] * 1;
+							intCrumbs = app.arrCrumbs.length,
+							intParent = app.arrCrumbs[intCrumbs - 1] * 1;
 						for (var intItr = 0; intItr != intNewStacks; ++intItr) {
 							var intStack = data.new_stack_ids[intItr] * 1;
-							arrCrumbs.push(intStack);
+							app.arrCrumbs.push(intStack);
 							if (!app.data.stacks[intParent])
 								app.data.stacks[intParent] = [];
 							var objNewStack = {
 								stack_id: intStack,
 								parent_id: intParent,
 								is_url: 0,
-								nickname: arrCrumbsValues[intItr + intCrumbs],
+								nickname: app.arrCrumbsValues[intItr + intCrumbs],
 								value: "",
 								order_id: app.data.stacks[intParent].length + 1
 							};
@@ -394,26 +400,26 @@ $(function () {
 							app.data.stacks[intParent].push(objNewStack);
 							intParent = intStack;
 						}
-						arrLastCrumbs = arrCrumbs.slice(0);
-						arrLastCrumbsValues = arrCrumbsValues.slice(0);
+						app.arrLastCrumbs = app.arrCrumbs.slice(0);
+						app.arrLastCrumbsValues = app.arrCrumbsValues.slice(0);
 					}
 					cleanUpTempStacks();
 				})
 				.catch(function (error) {
 
 				})
-			arrLastCrumbs = arrCrumbs.slice(0);
-			arrLastCrumbsValues = arrCrumbsValues.slice(0);
+			app.arrLastCrumbs = app.arrCrumbs.slice(0);
+			app.arrLastCrumbsValues = app.arrCrumbsValues.slice(0);
 		}
 		function displayNoStacks() {
 			var intMenuItems = $(".save-location-drop-item:not(.hidden)").length,
 				// find new stacks
 				arrMissingNicknames = [];
-			var intCrumbs = arrCrumbs.length;
+			var intCrumbs = app.arrCrumbs.length;
 			for (var intItr = 0; intItr != intCrumbs; ++intItr) {
-				var intCrumb = arrCrumbs[intItr];
+				var intCrumb = app.arrCrumbs[intItr];
 				if (intCrumb === null) {
-					var strCrumbValue = arrCrumbsValues[intItr];
+					var strCrumbValue = app.arrCrumbsValues[intItr];
 					if (strCrumbValue.length)
 						arrMissingNicknames.push(strCrumbValue);
 				}
@@ -460,13 +466,13 @@ $(function () {
 							return function () {
 								var strVal = $input.val(),
 									arrVals = strVal.split(/\//);
-								arrCrumbs[intOpenMunuIndex + 1] = objStack.stack_id * 1;
-								arrCrumbsValues[intOpenMunuIndex + 1] = objStack.nickname;
+								app.arrCrumbs[intOpenMunuIndex + 1] = objStack.stack_id * 1;
+								app.arrCrumbsValues[intOpenMunuIndex + 1] = objStack.nickname;
 								arrVals[intOpenMunuIndex + 1] = objStack.nickname;
-								if (intOpenMunuIndex != arrCrumbs.length - 2) {
+								if (intOpenMunuIndex != app.arrCrumbs.length - 2) {
 									arrVals.length = intOpenMunuIndex + 2;
-									arrCrumbs.length = intOpenMunuIndex + 2;
-									arrCrumbsValues.length = intOpenMunuIndex + 2;
+									app.arrCrumbs.length = intOpenMunuIndex + 2;
+									app.arrCrumbsValues.length = intOpenMunuIndex + 2;
 								}
 								arrVals.push("");
 								$input.val(arrVals.join("/"));
@@ -511,19 +517,19 @@ $(function () {
 			for (var intItr = 1; intItr != intVals; intItr++) {
 				var
 				strTextCrumb = arrVals[intItr], // from text
-				intCrumb = arrCrumbs[intItr], // from mem
-				intParentCrumb = arrCrumbs[intItr - 1],
-				strCrumb = arrCrumbsValues[intItr]; // from mem
+				intCrumb = app.arrCrumbs[intItr], // from mem
+				intParentCrumb = app.arrCrumbs[intItr - 1],
+				strCrumb = app.arrCrumbsValues[intItr]; // from mem
 				// if the parent doesnt exist theres nothing to search which means its always new
-				if (intParentCrumb === null && arrCrumbs.length > 2) { // no parent
-					arrCrumbs[intItr] = null; // set as new folder
-					arrCrumbsValues[intItr] = strTextCrumb;
+				if (intParentCrumb === null && app.arrCrumbs.length > 2) { // no parent
+					app.arrCrumbs[intItr] = null; // set as new folder
+					app.arrCrumbsValues[intItr] = strTextCrumb;
 					// if theres not crumb id do a text
 				} else {//} else if (strTextCrumb != strCrumb) { 
 					// optimize process when nothings there
 					if (strTextCrumb == "") {
-						arrCrumbs[intItr] = null;
-						arrCrumbsValues[intItr] = "";
+						app.arrCrumbs[intItr] = null;
+						app.arrCrumbsValues[intItr] = "";
 						continue;
 					}
 					// didnt match. modify whats in the buffer if it differs from what in the text
@@ -533,8 +539,8 @@ $(function () {
 						arrStacks = app.data.stacks[intParentCrumb],
 						arrBuffer = [];
 					if (!arrStacks) {
-						arrCrumbs[intItr] = null;
-						arrCrumbsValues[intItr] = strTextCrumb;
+						app.arrCrumbs[intItr] = null;
+						app.arrCrumbsValues[intItr] = strTextCrumb;
 						continue;
 					}
 					for (var intStack in arrStacks) {
@@ -568,8 +574,8 @@ $(function () {
 								// when theres no id in the buffer a text can be matched using a text search
 								if (strTextCrumb == objStack.nickname) { // text matches
 									boolTextSearch = true;
-									arrCrumbs[intItr] = objStack.stack_id * 1; // set as new folder	
-									arrCrumbsValues[intItr] = strTextCrumb;
+									app.arrCrumbs[intItr] = objStack.stack_id * 1; // set as new folder	
+									app.arrCrumbsValues[intItr] = strTextCrumb;
 									break;
 								}
 							}
@@ -578,15 +584,15 @@ $(function () {
 					}
 					// add blanks at end
 					if (!boolTextSearch) {
-						arrCrumbs[intItr] = null; // set as new folder
-						arrCrumbsValues[intItr] = strTextCrumb;
+						app.arrCrumbs[intItr] = null; // set as new folder
+						app.arrCrumbsValues[intItr] = strTextCrumb;
 						//displayNoStacks();
 					}
 				}
 			}
 			// remove an items from the end that are no longer in the text
-			arrCrumbs.length = intItr;
-			arrCrumbsValues.length = intItr;
+			app.arrCrumbs.length = intItr;
+			app.arrCrumbsValues.length = intItr;
 
 			// find the item the caret is on an item
 			for (var intItr = 0; intItr != intVals; intItr++) {
@@ -604,10 +610,10 @@ $(function () {
 			if (!intCaretItem)
 				intCaretItem++;
 			intCaretItem--;
-			intSelectedCrumb = arrCrumbs[intCaretItem + 1];
+			intSelectedCrumb = app.arrCrumbs[intCaretItem + 1];
 			intOpenMunuIndex = intCaretItem;
 			var boolLastCrumb = intCaretItem == intVals - 2;
-			var intCrumb = !intCaretItem ? 0 : arrCrumbs[intCaretItem];
+			var intCrumb = !intCaretItem ? 0 : app.arrCrumbs[intCaretItem];
 			if (intMenuItem != intCrumb || (intSelectedCrumb == null && !boolLastCrumb)) {
 				drawMenu(intCrumb);
 			}
@@ -618,7 +624,7 @@ $(function () {
 					intSelectedCrumb == null
 				)
 			) {
-				narrowMenuList(arrCrumbsValues[intCaretItem + 1]);
+				narrowMenuList(app.arrCrumbsValues[intCaretItem + 1]);
 			}
 			displayNoStacks();
 		}
@@ -735,8 +741,8 @@ $(function () {
 		function activateLoaf() {
 			if (!boolMenuDropped) {
 				var
-					intCrumbs = arrCrumbs.length,
-					intParent = !arrCrumbs.length ? 0 : arrCrumbs[intCrumbs - 1];
+					intCrumbs = app.arrCrumbs.length,
+					intParent = !app.arrCrumbs.length ? 0 : app.arrCrumbs[intCrumbs - 1];
 				dropMenu();
 				intOpenMunuIndex = 0;
 				drawMenu(intParent);

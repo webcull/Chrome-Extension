@@ -20,6 +20,16 @@ app.getBookmark = function () {
 		objBookmark = app.data;
 	return objBookmark;
 };
+// prevent dead objects by creating them here
+app.newParentArray = function () {
+	var arr = new Array();
+	var len = arguments.length;
+	for (var intItr=0; intItr!=len; intItr++) {
+		arr.push(arguments[intItr]);
+	}
+	return arr;
+};
+
 app.objTags={}
 app.accounts =[]
 app.backgroundPost = sessionPostWithRetries;

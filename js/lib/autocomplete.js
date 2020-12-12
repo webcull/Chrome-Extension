@@ -145,7 +145,7 @@ var InputAutocomplete = /** @class */ (function () {
                 suggestion.classList.remove('token-autocomplete-suggestion-highlighted');
             });
             suggestions[index].classList.add('token-autocomplete-suggestion-highlighted');
-            suggestions[index].scrollIntoViewIfNeeded()
+            //suggestions[index].scrollIntoViewIfNeeded()
 
         };
         Autocomplete.prototype.highlightSuggestion = function (suggestion) {
@@ -153,7 +153,7 @@ var InputAutocomplete = /** @class */ (function () {
                 suggestion.classList.remove('token-autocomplete-suggestion-highlighted');
             });
             suggestion.classList.add('token-autocomplete-suggestion-highlighted');
-            suggestion.scrollIntoViewIfNeeded()
+            //suggestion.scrollIntoViewIfNeeded()
         };
         Autocomplete.prototype.clearSuggestions = function () {
             this.suggestions.innerHTML = '';
