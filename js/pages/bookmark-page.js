@@ -462,7 +462,7 @@ $(function () {
 						continue;
 					}
 					var $item = $("<div class='save-location-drop-item' id='save-location-drop-" + objStack.stack_id + "'>")
-						.click((function (objStack) {
+						.bind('mousedown', (function (objStack) {
 							return function () {
 								var strVal = $input.val(),
 									arrVals = strVal.split(/\//);
