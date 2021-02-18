@@ -64,7 +64,7 @@ pages['bookmark-page'] = function ($self) {
 			paging("loading-page");
 			// not http or https so just take user to webcull
 			chrome.tabs.update({
-				url: "https://webcull.com"
+				url: "https://webcull.com/"
 			});
 		} else {
 			$("html,body").removeClass('is-init');
@@ -462,7 +462,7 @@ $(function () {
 						continue;
 					}
 					var $item = $("<div class='save-location-drop-item' id='save-location-drop-" + objStack.stack_id + "'>")
-						.bind('mousedown', (function (objStack) {
+						.bind('click', (function (objStack) {
 							return function () {
 								var strVal = $input.val(),
 									arrVals = strVal.split(/\//);
@@ -477,6 +477,7 @@ $(function () {
 								arrVals.push("");
 								$input.val(arrVals.join("/"));
 								processLocationText();
+
 							};
 						})(objStack))
 						.text(objStack.nickname)
@@ -757,11 +758,15 @@ $(function () {
 		var refDeactivationTimeout;
 		bindKeyboard();
 		$("#save-location-input").on("focus keyup keydown keypress click change", function () {
-			if (refDeactivationTimeout) $.clear(refDeactivationTimeout);
+			$.clear(refDeactivationTimeout);
 			activateLoaf();
 		});
 		$("#save-location-input").on("blur", function () {
-			refDeactivationTimeout = $.delay(200, deactivateLoaf);
+			refDeactivationTimeout = $.delay(100, function () {
+				if (!$("#save-location-input:focus").length) {
+					deactivateLoaf();
+				}
+			});
 		});
 	})();
 	// Tags suggestion input

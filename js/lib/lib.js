@@ -31,7 +31,7 @@ async function getCookies(domain, name) {
 }
 async function sessionPost(arrParams) {
 	return new Promise(function (resolve, reject) {
-		getCookies("https://webcull.com", "__DbSessionNamespaces").then(function (session_hash) {
+		getCookies("https://webcull.com/", "__DbSessionNamespaces").then(function (session_hash) {
 			if (arrDefaultParams) $.extend(arrParams.post, arrDefaultParams);
 			$.extend(arrParams.post, { __DbSessionNamespaces: decodeURIComponent(session_hash) });
 			fetch(arrParams.url, {
