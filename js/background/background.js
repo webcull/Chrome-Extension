@@ -36,7 +36,7 @@ app.backgroundPost = sessionPostWithRetries;
 initalizeAccount();
 
 function initalizeAccount() {
-	sessionPostWithRetries({ url: "https://webcull.com/api/load", post: {}, }, 1)
+	sessionPostWithRetries({ url: "https://api.webcull.com/api/load", post: {}, }, 1)
 		.then(function (arrData) {
 			if (arrData.no_user)
 				return;
@@ -44,7 +44,7 @@ function initalizeAccount() {
 			processURLs();
 			// Task CHX-009
 			// Load accounts on load
-			sessionPostWithRetries({ url: "https://webcull.com/api/accounts", post: {}, }, 1)
+			sessionPostWithRetries({ url: "https://api.webcull.com/api/accounts", post: {}, }, 1)
 			.then((response)=>{
 				app.accounts = response.users
 			})
@@ -110,7 +110,7 @@ function modifyBookmark(strName, strVal) {
 		name: strName,
 		value: dblEncode(strVal)
 	};
-	app.backgroundPost({ url: "https://webcull.com/api/modify", post: arrModify })
+	app.backgroundPost({ url: "https://api.webcull.com/api/modify", post: arrModify })
 		.then(response => {})
 		.catch(error => console.log(error))
 }
